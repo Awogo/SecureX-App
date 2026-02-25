@@ -4,9 +4,10 @@ import logoBlue from "../assets/logo-blue.png";
 import "../styles/dashboard.css";
 
 const Dashboard = () => {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
   const [activeNav, setActiveNav] = useState("dashboard");
-
+ 
   // Mock data
   const trustScore = 89;
   const userData = {
@@ -43,47 +44,40 @@ const Dashboard = () => {
   ];
 
   const quickActions = [
-    {
-      icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-          <rect x="5" y="3" width="14" height="18" rx="2" stroke="#4A5CF5" strokeWidth="2"/>
-          <path d="M9 7H15M9 11H15M9 15H12" stroke="#4A5CF5" strokeWidth="2" strokeLinecap="round"/>
-        </svg>
-      ),
-      title: "Create Transactions",
-      subtitle: "Start a new escrow transaction",
-      color: "#EEF2FF"
-    },
-    {
-      icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-          <rect x="5" y="9" width="14" height="10" rx="2" stroke="#4A5CF5" strokeWidth="2"/>
-          <path d="M9 9V7C9 5.34315 10.3431 4 12 4C13.6569 4 15 5.34315 15 7V9" stroke="#4A5CF5" strokeWidth="2"/>
-          <circle cx="12" cy="14" r="1.5" fill="#4A5CF5"/>
-        </svg>
-      ),
-      title: "Scan OTP",
-      subtitle: "Verify delivery confirmation",
-      color: "#EEF2FF"
-    },
-    {
-      icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-          <path d="M3 8L10 4L17 8M3 8L10 12M3 8V16L10 20M17 8L10 12M17 8V16L10 20M10 12V20" stroke="#00D9A3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      ),
-      title: "AI Business Analysis",
-      subtitle: "View intelligent insights",
-      color: "#D1FAE5"
-    },
-  ];
+  {
+    title: "Create Transactions",
+    subtitle: "Start a new escrow transaction",
+    color: "#EEF2FF",
+    route: "/create-transactions"
+  },
+  {
+    title: "Scan OTP",
+    subtitle: "Verify delivery confirmation",
+    color: "#EEF2FF",
+    route: "/scan-otp"
+  },
+  {
+    title: "AI Business Analysis",
+    subtitle: "View intelligent insights",
+    color: "#D1FAE5",
+    route: "/ai-business-analysis"
+  },
+];
+
 
   return (
     <div className="dashboard-page">
       {/* Sidebar */}
-      <aside className="dashboard-sidebar">
+      <aside className={`dashboard-sidebar ${sidebarOpen ? "open" : ""}`}>
+        
         <div className="sidebar-header">
           <img src={logoBlue} alt="SecureX" className="sidebar-logo" />
+          
+          <button
+            className="close-sidebar-btn"
+             onClick={() => setSidebarOpen(false)}>
+             ✕
+            </button>
         </div>
 
         <nav className="sidebar-nav">
@@ -102,7 +96,10 @@ const Dashboard = () => {
 
           <button 
             className={`nav-item ${activeNav === "transactions" ? "active" : ""}`}
-            onClick={() => setActiveNav("/CreateTransaction")}
+            onClick={() => {
+                setActiveNav("transactions");
+                navigate("/transactions");
+            }}
           >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
               <path d="M3 5H17M3 10H17M3 15H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -112,7 +109,10 @@ const Dashboard = () => {
 
           <button 
             className={`nav-item ${activeNav === "ai" ? "active" : ""}`}
-            onClick={() => setActiveNav("ai")}
+            onClick={() => {
+                setActiveNav("ai-insights");
+                navigate("/ai-insights");
+            }}
           >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
               <circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="1.5"/>
@@ -123,18 +123,24 @@ const Dashboard = () => {
 
           <button 
             className={`nav-item ${activeNav === "verification" ? "active" : ""}`}
-            onClick={() => setActiveNav("verification")}
+            onClick={() => {
+                setActiveNav("verification");
+                navigate("/kyc");
+            }}
           >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
               <path d="M10 2L4 5V9C4 12.5 7 16 10 17C13 16 16 12.5 16 9V5L10 2Z" stroke="currentColor" strokeWidth="1.5"/>
               <path d="M7 10L9 12L13 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            <span>Verification</span>
+            <span>KYC Verification</span>
           </button>
 
           <button 
             className={`nav-item ${activeNav === "settings" ? "active" : ""}`}
-            onClick={() => setActiveNav("settings")}
+            onClick={() => {
+                setActiveNav("settings");
+                navigate("/settings");
+            }}
           >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
               <circle cx="10" cy="10" r="3" stroke="currentColor" strokeWidth="1.5"/>
@@ -144,7 +150,7 @@ const Dashboard = () => {
           </button>
         </nav>
 
-        <div className="sidebar-footer">
+         <div className="sidebar-footer">
           <div className="user-profile">
             <div className="user-avatar">{userData.avatar}</div>
             <div className="user-info">
@@ -161,10 +167,27 @@ const Dashboard = () => {
         </div>
       </aside>
 
+        {sidebarOpen && (
+          <div
+            className="sidebar-overlay"
+            onClick={() => setSidebarOpen(false)}/>
+           )}
+
+
       {/* Main Content */}
       <main className="dashboard-main">
         {/* Header */}
         <header className="dashboard-header">
+            <button
+              className="mobile-menu-btn"
+              onClick={() => setSidebarOpen(true)}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M3 6H21M3 12H21M3 18H21"
+                stroke="#1E1E1E"
+                strokeWidth="2"
+                strokeLinecap="round" />
+              </svg>
+           </button>
           <div className="search-bar">
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
               <circle cx="8" cy="8" r="5.25" stroke="#7A7A7A" strokeWidth="1.5"/>
@@ -243,11 +266,11 @@ const Dashboard = () => {
               </div>
 
               {/* Quick Actions */}
-              <div className="quick-actions-section">
+              <div className="card">
                 <h3>Quick Actions</h3>
                 <div className="actions-grid">
                   {quickActions.map((action, index) => (
-                    <div key={index} className="action-card" style={{ background: action.color }}>
+                    <div key={index} className="action-card" style={{ background: action.color }} onClick={() => navigate(action.route)}>
                       <div className="action-icon">{action.icon}</div>
                       <h4>{action.title}</h4>
                       <p>{action.subtitle}</p>
@@ -292,7 +315,7 @@ const Dashboard = () => {
               <div className="chart-card">
                 <h3>Escrow Payment Distribution</h3>
                 <div className="pie-chart">
-                  <svg width="200" height="200" viewBox="0 0 200 200">
+                  <svg viewBox="0 0 200 200" style={{ width: "100%", maxWidth: "200px" }}>
                     <circle cx="100" cy="100" r="80" fill="none" stroke="#4A5CF5" strokeWidth="40" strokeDasharray="251 502"/>
                     <circle cx="100" cy="100" r="80" fill="none" stroke="#00D9A3" strokeWidth="40" strokeDasharray="188 502" strokeDashoffset="-251" transform="rotate(0 100 100)"/>
                     <circle cx="100" cy="100" r="80" fill="none" stroke="#2C36A2" strokeWidth="40" strokeDasharray="63 502" strokeDashoffset="-439"/>

@@ -48,22 +48,21 @@ const Dashboard = () => {
     title: "Create Transactions",
     subtitle: "Start a new escrow transaction",
     color: "#EEF2FF",
-    route: "/create-transactions"
+    route: "/create-transaction"  // ✅ Correct - singular
   },
   {
     title: "Scan OTP",
     subtitle: "Verify delivery confirmation",
     color: "#EEF2FF",
-    route: "/scan-otp"
+    route: "/scan-otp"  // You can change this later
   },
   {
     title: "AI Business Analysis",
     subtitle: "View intelligent insights",
     color: "#D1FAE5",
-    route: "/ai-business-analysis"
+    route: "/ai-insights"  // You can change this later
   },
 ];
-
 
   return (
     <div className="dashboard-page">
@@ -125,14 +124,14 @@ const Dashboard = () => {
             className={`nav-item ${activeNav === "verification" ? "active" : ""}`}
             onClick={() => {
                 setActiveNav("verification");
-                navigate("/kyc");
+                navigate("/verifications");
             }}
           >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
               <path d="M10 2L4 5V9C4 12.5 7 16 10 17C13 16 16 12.5 16 9V5L10 2Z" stroke="currentColor" strokeWidth="1.5"/>
               <path d="M7 10L9 12L13 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            <span>KYC Verification</span>
+            <span>Verification</span>
           </button>
 
           <button 

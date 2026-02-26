@@ -632,3 +632,155 @@
     padding: 20px;
   }
 }
+
+/* ========================================
+   MOBILE FIX - CRITICAL
+   ======================================== */
+
+@media (max-width: 768px) {
+  
+  /* Remove sidebar space on mobile */
+  .dashboard-main,
+  .transaction-main,
+  .verification-main,
+  .transactions-main {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+
+  /* Hide sidebar by default on mobile */
+  .dashboard-sidebar,
+  .transaction-sidebar,
+  .verification-sidebar,
+  .transactions-sidebar {
+    transform: translateX(-100%);
+    position: fixed;
+    z-index: 2000;
+  }
+
+  /* Show sidebar when open */
+  .dashboard-sidebar.open,
+  .transaction-sidebar.open,
+  .verification-sidebar.open,
+  .transactions-sidebar.open {
+    transform: translateX(0);
+  }
+
+  /* Show overlay when sidebar is open */
+  .sidebar-overlay {
+    display: block !important;
+  }
+
+  /* Show hamburger menu button */
+  .mobile-menu-btn {
+    display: block !important;
+  }
+
+  /* Show close button in sidebar */
+  .close-sidebar-btn {
+    display: block !important;
+  }
+
+  /* Fix header on mobile */
+  .dashboard-header,
+  .transaction-header,
+  .verification-header,
+  .transactions-header {
+    padding: 16px 20px !important;
+  }
+
+  /* Fix search bar on mobile */
+  .search-bar {
+    width: auto !important;
+    flex: 1 !important;
+    margin: 0 12px !important;
+    min-width: 0 !important;
+  }
+
+  /* Fix content padding on mobile */
+  .dashboard-content,
+  .transactions-content,
+  .verification-content,
+  .form-container {
+    padding: 16px !important;
+  }
+
+  /* Prevent horizontal scroll */
+  body {
+    overflow-x: hidden !important;
+  }
+
+  /* Fix grid layouts on mobile */
+  .content-grid,
+  .stats-grid,
+  .actions-grid,
+  .steps-grid,
+  .info-grid,
+  .benefits-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Fix tables on mobile */
+  .table-container {
+    overflow-x: auto !important;
+  }
+
+  .transactions-table {
+    min-width: 800px !important;
+  }
+
+  /* Fix form steps on mobile */
+  .progress-steps {
+    padding: 20px !important;
+    overflow-x: auto !important;
+  }
+
+  .step-circle {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 14px !important;
+  }
+
+  .step-line {
+    width: 40px !important;
+  }
+
+  /* Fix form containers on mobile */
+  .form-step {
+    padding: 24px !important;
+  }
+
+  .form-step h2 {
+    font-size: 24px !important;
+  }
+
+  /* Fix role cards on mobile */
+  .role-options {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Fix button groups on mobile */
+  .button-group,
+  .cta-buttons {
+    flex-direction: column !important;
+  }
+
+  /* Fix banner on mobile */
+  .trust-score-banner {
+    padding: 20px !important;
+  }
+
+  .banner-content {
+    flex-direction: column !important;
+  }
+}
+
+/* Prevent any horizontal overflow */
+* {
+  max-width: 100%;
+}
+
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+}

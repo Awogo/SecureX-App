@@ -33,18 +33,21 @@ const Login = () => {
   };
 
   return (
-    <div className="auth-page">
-      <div className="auth-card">
+<div className="auth-page">
         {/* Logo */}
-        <div className="auth-logo-section">
-  <div className="logo-wrapper">
-    <img src={logoIcon} alt="SecureX Icon" className="logo-icon" />
+  <div>
+   <div className="auth-logo-section">
+    <div className="logo">
+     <div className="logo-wrapper">
+       <img src={logoIcon} alt="SecureX Icon" className="logo-icon" />
+      </div>
+         <div className="auth-brand">
+        <h2>SecureX</h2><p>Safe payment for Africa SMEs</p>
+        </div> 
+       </div>
+    
   </div>
-  <div className="auth-brand">
-    <h2>SecureX</h2>
-    <p>Safe payment for Africa SMEs</p>
-  </div>
-</div>
+
 
         {/* Title */}
         <h1 className="auth-heading">Welcome Back</h1>
@@ -52,7 +55,7 @@ const Login = () => {
 
         {/* Error */}
         {error && <div className="auth-error">{error}</div>}
-
+        <div className="auth-card">
         {/* Form */}
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">
@@ -114,7 +117,8 @@ const Login = () => {
             {loading ? "Signing in..." : "Sign in"}
           </button>
         </form>
-
+        </div>
+        
         {/* Footer */}
         <p className="auth-footer">
           Don't have an account? <a href="/signup">Sign Up</a>

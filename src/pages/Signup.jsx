@@ -59,24 +59,26 @@ const Signup = () => {
 
   return (
     <div className="auth-page">
-      <div className="auth-card">
         {/* Logo */}
-       <div className="auth-logo-section">
-  <div className="logo-wrapper">
-    <img src={logoIcon} alt="SecureX Icon" className="logo-icon" />
-  </div>
-  <div className="auth-brand">
-    <h2>SecureX</h2>
-    <p>Safe payment for Africa SMEs</p>
-  </div>
-</div>
+    <div>
+      <div className="auth-logo-section">
+      <div className="logo">
+      <div className="logo-wrapper">
+       <img src={logoIcon} alt="SecureX Icon" className="logo-icon" />
+      </div>
+         <div className="auth-brand">
+          <h2>SecureX</h2> <p>Safe payment for Africa SMEs</p>
+        </div>
+       </div>
+     </div>
+
         {/* Title */}
         <h1 className="auth-heading">Create Your Account</h1>
         <p className="auth-subheading">Join thousands securing their transactions</p>
 
         {/* Error */}
         {error && <div className="auth-error">{error}</div>}
-
+      <div className="auth-card">
         {/* Form */}
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-row">
@@ -229,7 +231,7 @@ const Signup = () => {
             {loading ? "Creating Account..." : "Create Account"}
           </button>
         </form>
-
+      </div>
         {/* Footer */}
         <p className="auth-footer">
           Already have an account? <a href="/login">Sign in</a>

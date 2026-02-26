@@ -124,7 +124,7 @@ const Dashboard = () => {
             className={`nav-item ${activeNav === "verification" ? "active" : ""}`}
             onClick={() => {
                 setActiveNav("verification");
-                navigate("/verifications");
+                navigate("/verification");
             }}
           >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">

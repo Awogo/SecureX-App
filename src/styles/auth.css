@@ -10,7 +10,7 @@ body {
 /* Auth Page Layout */
 .auth-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #F6F7FB 0%, #EEF2F7 100%);
+  background: linear-gradient(135deg, #F6F7FB 0%, #E8EAF6 100%);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -19,8 +19,9 @@ body {
 }
 
 .auth-card {
-  width: 100%;
-  max-width: 480px;
+  
+ width: clamp(320px, 90%, 1500px); 
+  margin: 0 auto; 
   background: #FFFFFF;
   border-radius: 20px;
   padding: 44px 40px;
@@ -37,8 +38,8 @@ body {
 
 /* Logo Wrapper - Blue Rounded Square Background */
 .logo-wrapper {
-  width: 64px;
-  height: 64px;
+  width: 50px;
+  height: 50px;
   background: linear-gradient(135deg, #4A5CF5 0%, #2C36A2 100%);
   border-radius: 14px;
   display: flex;
@@ -55,11 +56,21 @@ body {
   object-fit: contain;
 }
 
+.logo{
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+  align-items:flex-start;
+}
 /* Brand Text Below Logo */
 .auth-brand {
-  text-align: center;
+  text-align:left;
 }
-
+.auth-brand h2,
+.auth-brand p {
+  margin: 0;
+  padding: 0;
+}
 .auth-brand h2 {
   font-size: 20px;
   font-weight: 700;
@@ -211,7 +222,7 @@ body {
 .auth-button {
   width: 100%;
   padding: 14px;
-  background: #4A5CF5;
+  background: linear-gradient(135deg, #232B81 0%, #232B81 100%);
   border: none;
   border-radius: 10px;
   color: white;
@@ -259,7 +270,7 @@ body {
   gap: 8px;
   margin-top: 24px;
   padding: 10px;
-  background: #D1FAE5;
+  background: #00C4A71A;
   border-radius: 8px;
   color: #00D9A3;
   font-size: 13px;
@@ -340,6 +351,34 @@ body {
   text-align: center;
   margin-bottom: 16px;
 }
+
+/* Center container - add this to your layout */
+.centered-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* The Animated Circle */
+.success-icon-circle {
+  animation: flashSuccess 1.5s infinite;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* Keyframes for constant flashing */
+@keyframes flashSuccess {
+  0% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.05); } /* Slightly bigger */
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* Make SVG slightly bigger (original was 64x64) */
+.success-icon-circle svg {
+  width: 80px; /* Increased size */
+  height: 80px;
+}
+
 
 /* Responsive */
 @media (max-width: 640px) {

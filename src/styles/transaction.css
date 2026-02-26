@@ -41,9 +41,10 @@ body {
 }
 
 .transaction-sidebar .sidebar-logo {
-  width: 40px;
+  width: 120px;
   height: 40px;
   object-fit: contain;
+  margin: 0;
 }
 
 .close-sidebar-btn {

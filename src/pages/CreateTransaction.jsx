@@ -354,7 +354,7 @@ const CreateTransaction = () => {
                 <p className="upload-subtitle">PNG, JPG, PDF up to 10MB</p>
               </div>
 
-              <button className="complete-btn" onClick={() => navigate("/dashboard")}>
+              <button className="complete-btn" onClick={() => navigate("/payment-escrow")}>
                 Complete & Release Payment
               </button>
             </div>

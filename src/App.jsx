@@ -9,6 +9,9 @@ import PasswordSuccess from "./pages/PasswordSuccess";
 import Dashboard from "./pages/Dashboard";
 import CreateTransaction from "./pages/CreateTransaction";
 import Transactions from "./pages/Transactions";
+import DeliveryCodeSeller from "./pages/DeliveryCodeSeller";
+import DeliveryCodeBuyer from "./pages/DeliveryCodeBuyer";
+import PaymentEscrow from "./pages/PaymentEscrow";
 import TransactionDetails from "./pages/TransactionDetails";
 import Verification from "./pages/Verification";
 
@@ -27,6 +30,9 @@ function App() {
         <Route path="/create-transaction" element={<CreateTransaction />} />
         <Route path="/transactions" element={<Transactions />} />
         <Route path="/transaction-details" element={<TransactionDetails />} />
+        <Route path="/delivery-code-seller" element={<DeliveryCodeSeller />} />
+        <Route path="/delivery-code-buyer" element={<DeliveryCodeBuyer />} />
+        <Route path="/payment-escrow" element={<PaymentEscrow />} />
         <Route path="/verification" element={<Verification />} />
       </Routes>
     </Router>

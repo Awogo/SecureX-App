@@ -42,16 +42,39 @@ const Signup = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match");
       return;
     }
+
     setLoading(true);
+    setError("");
+
     try {
-      console.log("Signup:", formData);
-      navigate("/verify-email");
+      const { confirmPassword, ...dataToSend } = formData;
+      console.log("Sending data:", dataToSend);
+      const response = await fetch("http://100.53.84.123/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(dataToSend),
+      });
+
+      const data = await response.json();
+      console.log("Response:", data);
+      if (response.ok) {
+      console.log("Success:", data.message);
+        navigate("/verify-email", {state: { email: formData.email }});
+      } 
+      else {
+       
+        setError(data.message || "Registration failed");
+      }
+
     } catch (err) {
-      setError("Registration failed");
+      setError("Network error. Please check your connection.");
     } finally {
       setLoading(false);
     }

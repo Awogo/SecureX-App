@@ -1,10 +1,13 @@
 import { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom"; // Added useLocation
 import logoIcon from "../assets/logo-icon.png";
 import "../styles/auth.css";
 
 const VerifyEmail = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const email = location.state?.email || "";
+
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -12,11 +15,15 @@ const VerifyEmail = () => {
   const inputRefs = useRef([]);
 
   useEffect(() => {
+    if (!email) {
+      console.warn("No email found, redirection recommended.");
+    }
+
     const interval = setInterval(() => {
       setTimer((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [email]);
 
   const handleChange = (index, value) => {
     if (value.length > 1) return;
@@ -38,12 +45,47 @@ const VerifyEmail = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!email) {
+        setError("Email is missing. Please go back and sign up again.");
+        return;
+    }
+
     setLoading(true);
+    setError("");
+
     try {
-      console.log("OTP:", otp.join(""));
-      navigate("/reset-password");
+      const otpCode = otp.join("");
+
+      const response = await fetch("http://100.53.84.123/api/auth/verify-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email,
+          otp: otpCode
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // SUCCESS (Code 200)
+        // Backend returns JWT, meaning the user is now logged in.
+        
+        // 1. Save the token
+        localStorage.setItem("token", data.token);
+        
+        // 2. Go to dashboard
+        navigate("/dashboard");
+      } else {
+        // FAILURE (Code 400)
+        setError(data.message || "Invalid verification code");
+      }
+
     } catch (err) {
-      setError("Invalid verification code");
+      setError("Network error. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -51,7 +93,8 @@ const VerifyEmail = () => {
 
   const handleResend = () => {
     setTimer(600);
-    console.log("Resend OTP");
+    console.log("Resend OTP for:", email);
+    // NOTE: You will need a "Resend OTP" API endpoint from your backend dev to implement this fully.
   };
 
   const formatTime = (seconds) => {
@@ -77,7 +120,7 @@ const VerifyEmail = () => {
         {/* Title */}
         <h1 className="auth-heading">Verify Your Email</h1>
         <p className="auth-subheading">
-          We've sent a 6-digit verification code to your email.<br />
+          We've sent a 6-digit verification code to <strong>{email}</strong><br />
           Please enter it below to complete your registration.
         </p>
 

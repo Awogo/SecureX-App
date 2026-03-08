@@ -8,6 +8,65 @@ const Verification = () => {
   const [activeNav, setActiveNav] = useState("verification");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // --- NEW STATE FOR MODAL AND FORM ---
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  
+  // Form Data matching the API schema
+  const [kycData, setKycData] = useState({
+    phoneNumber: "",
+    governmentId: "",
+    accountNumber: "",
+    bankCode: "",
+    businessName: ""
+  });
+
+  const handleKycChange = (e) => {
+    const { name, value } = e.target;
+    setKycData(prev => ({ ...prev, [name]: value }));
+  };
+
+  // --- API SUBMISSION FUNCTION ---
+  const handleKycSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      setError("You must be logged in to update KYC.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch("http://100.53.84.123/api/auth/update-kyc", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}` // Crucial for protected routes
+        },
+        body: JSON.stringify(kycData)
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert("KYC Updated Successfully!");
+        setIsModalOpen(false);
+        // Optionally refresh user data here or update status manually
+      } else {
+        setError(data.message || "Failed to update KYC");
+      }
+    } catch (err) {
+      setError("Network error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const userData = {
     name: "Poly Adani",
     email: "poly@example.com",
@@ -80,10 +139,7 @@ const Verification = () => {
         <nav className="sidebar-nav">
           <button 
             className={`nav-item ${activeNav === "dashboard" ? "active" : ""}`}
-            onClick={() => {
-              setActiveNav("dashboard");
-              navigate("/dashboard");
-            }}
+            onClick={() => { setActiveNav("dashboard"); navigate("/dashboard"); }}
           >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
               <rect x="3" y="3" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
@@ -96,10 +152,7 @@ const Verification = () => {
 
           <button 
             className={`nav-item ${activeNav === "transactions" ? "active" : ""}`}
-            onClick={() => {
-              setActiveNav("transactions");
-              navigate("/transactions");
-            }}
+            onClick={() => { setActiveNav("transactions"); navigate("/transactions"); }}
           >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
               <path d="M3 5H17M3 10H17M3 15H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -109,10 +162,7 @@ const Verification = () => {
 
           <button 
             className={`nav-item ${activeNav === "ai" ? "active" : ""}`}
-            onClick={() => {
-              setActiveNav("ai");
-              navigate("/ai-insights");
-            }}
+            onClick={() => { setActiveNav("ai"); navigate("/ai-insights"); }}
           >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
               <circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="1.5"/>
@@ -134,10 +184,7 @@ const Verification = () => {
 
           <button 
             className={`nav-item ${activeNav === "settings" ? "active" : ""}`}
-            onClick={() => {
-              setActiveNav("settings");
-              navigate("/settings");
-            }}
+            onClick={() => { setActiveNav("settings"); navigate("/settings"); }}
           >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
               <circle cx="10" cy="10" r="3" stroke="currentColor" strokeWidth="1.5"/>
@@ -155,7 +202,10 @@ const Verification = () => {
               <p className="user-email">{userData.email}</p>
             </div>
           </div>
-          <button className="sign-out-btn" onClick={() => navigate("/login")}>
+          <button className="sign-out-btn" onClick={() => {
+             localStorage.removeItem("token");
+             navigate("/login");
+          }}>
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
               <path d="M7 13L3 9M3 9L7 5M3 9H11M11 3H13C14.1046 3 15 3.89543 15 5V13C15 14.1046 14.1046 15 13 15H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
@@ -267,6 +317,8 @@ const Verification = () => {
                   </div>
                   <h3>{step.title}</h3>
                   <p>{step.description}</p>
+                  
+                  {/* UPDATED BUTTONS */}
                   {step.status === 'completed' && (
                     <button className="step-btn view">
                       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -277,10 +329,10 @@ const Verification = () => {
                     </button>
                   )}
                   {step.status === 'in-progress' && (
-                    <button className="step-btn continue">Continue</button>
+                    <button className="step-btn continue" onClick={() => setIsModalOpen(true)}>Continue</button>
                   )}
                   {step.status === 'not-started' && (
-                    <button className="step-btn start">Start Verification</button>
+                    <button className="step-btn start" onClick={() => setIsModalOpen(true)}>Start Verification</button>
                   )}
                 </div>
               ))}
@@ -337,6 +389,125 @@ const Verification = () => {
           </div>
         </div>
       </main>
+
+      {/* --- NEW KYC MODAL --- */}
+      {isModalOpen && (
+        <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
+          <div className="kyc-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Complete Your Verification</h2>
+              <button className="modal-close" onClick={() => setIsModalOpen(false)}>✕</button>
+            </div>
+            
+            <form onSubmit={handleKycSubmit} className="kyc-form">
+              {error && <div className="auth-error" style={{marginBottom: '15px'}}>{error}</div>}
+              
+              <div className="form-group">
+                <label>Phone Number</label>
+                <input 
+                  type="text" 
+                  name="phoneNumber" 
+                  placeholder="08012345678" 
+                  value={kycData.phoneNumber}
+                  onChange={handleKycChange}
+                  required 
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Government ID (NIN/BVN)</label>
+                <input 
+                  type="text" 
+                  name="governmentId" 
+                  placeholder="A123456789" 
+                  value={kycData.governmentId}
+                  onChange={handleKycChange}
+                  required 
+                />
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Account Number</label>
+                  <input 
+                    type="text" 
+                    name="accountNumber" 
+                    placeholder="0000000000" 
+                    value={kycData.accountNumber}
+                    onChange={handleKycChange}
+                    required 
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Bank Code</label>
+                  <input 
+                    type="text" 
+                    name="bankCode" 
+                    placeholder="044" 
+                    value={kycData.bankCode}
+                    onChange={handleKycChange}
+                    required 
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Business Name (Optional)</label>
+                <input 
+                  type="text" 
+                  name="businessName" 
+                  placeholder="JT Ventures" 
+                  value={kycData.businessName}
+                  onChange={handleKycChange}
+                />
+              </div>
+
+              <button type="submit" className="auth-button" disabled={loading}>
+                {loading ? "Submitting..." : "Submit Verification"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+      
+      {/* Inline styles for the modal if CSS file is missing these classes */}
+      <style>{`
+        .modal-overlay {
+          position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+          background: rgba(0,0,0,0.5); 
+          display: flex; align-items: center; justify-content: center;
+          z-index: 1000;
+        }
+        .kyc-modal {
+          background: white;
+          padding: 30px;
+          border-radius: 12px;
+          width: 90%;
+          max-width: 500px;
+          max-height: 90vh;
+          overflow-y: auto;
+          box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .modal-header {
+          display: flex; justify-content: space-between; align-items: center;
+          margin-bottom: 20px;
+        }
+        .modal-header h2 { margin: 0; font-size: 1.25rem; }
+        .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #777; }
+        .kyc-form .form-group { margin-bottom: 15px; }
+        .kyc-form label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 0.9rem; }
+        .kyc-form input {
+          width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px;
+          font-size: 0.95rem;
+        }
+        .kyc-form .form-row { display: flex; gap: 15px; }
+        .kyc-form .form-row .form-group { flex: 1; }
+        .auth-button {
+          width: 100%; padding: 12px; background: #00D9A3; color: white; border: none;
+          border-radius: 6px; font-weight: 600; cursor: pointer; margin-top: 10px;
+        }
+        .auth-button:disabled { background: #ccc; }
+      `}</style>
     </div>
   );
 };

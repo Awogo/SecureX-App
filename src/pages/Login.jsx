@@ -22,15 +22,40 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError("");
+
     try {
-      console.log("Login:", formData);
-      navigate("/dashboard");
+      // --- API INTEGRATION ---
+      
+      // TODO: Confirm with backend if the path is /auth/login or /login
+      const response = await fetch("http://100.53.84.123/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+                     
+        localStorage.setItem("token", data.token);
+        
+        // 2. Redirect to dashboard
+        navigate("/dashboard");
+      } else {
+        
+        setError(data.message || "Invalid credentials");
+      }
+
     } catch (err) {
-      setError("Invalid credentials");
+      setError("Network error. Please check your connection.");
     } finally {
       setLoading(false);
     }
   };
+
 
   return (
 <div className="auth-page">

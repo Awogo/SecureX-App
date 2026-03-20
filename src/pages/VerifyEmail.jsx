@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom"; // Added useLocation
+import { useNavigate, useLocation } from "react-router-dom";
 import logoIcon from "../assets/logo-icon.png";
 import "../styles/auth.css";
+import { apiCall } from "../api"; // Import helper
 
 const VerifyEmail = () => {
   const navigate = useNavigate();
@@ -10,8 +11,11 @@ const VerifyEmail = () => {
 
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
   const [error, setError] = useState("");
-  const [timer, setTimer] = useState(600); // 10 minutes
+  const [successMsg, setSuccessMsg] = useState("");
+  const [timer, setTimer] = useState(120); 
+  
   const inputRefs = useRef([]);
 
   useEffect(() => {
@@ -31,6 +35,7 @@ const VerifyEmail = () => {
     const newOtp = [...otp];
     newOtp[index] = value;
     setOtp(newOtp);
+    setSuccessMsg(""); // Clear success msg when typing
 
     if (value && index < 5) {
       inputRefs.current[index + 1]?.focus();
@@ -45,61 +50,47 @@ const VerifyEmail = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!email) {
-        setError("Email is missing. Please go back and sign up again.");
-        return;
-    }
-
     setLoading(true);
     setError("");
 
     try {
-      const otpCode = otp.join("");
-
-      const response = await fetch("http://100.53.84.123/api/auth/verify-email", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: email,
-          otp: otpCode
-        }),
+      const data = await apiCall("/api/auth/verify-email", "POST", {
+        email: email,
+        otp: otp.join("")
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        // SUCCESS (Code 200)
-        // Backend returns JWT, meaning the user is now logged in.
-        
-        // 1. Save the token
-        localStorage.setItem("token", data.token);
-        
-        // 2. Go to dashboard
-        navigate("/dashboard");
-      } else {
-        // FAILURE (Code 400)
-        setError(data.message || "Invalid verification code");
-      }
+      // SUCCESS
+      localStorage.setItem("token", data.token);
+      navigate("/dashboard");
 
     } catch (err) {
-      setError("Network error. Please try again.");
+      setError(err.message || "Verification failed. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleResend = () => {
-    setTimer(600);
-    console.log("Resend OTP for:", email);
-    // NOTE: You will need a "Resend OTP" API endpoint from your backend dev to implement this fully.
+  const handleResend = async () => {
+    if (timer > 0) return; 
+    
+    setResending(true);
+    setError(""); 
+    
+    try {
+      await apiCall("/api/auth/resend-otp", "POST", { email });
+      setTimer(120); // timer 2 mins
+      setSuccessMsg("A new OTP has been sent to your email.");
+    } catch (err) {
+      setError(err.message || "Failed to resend OTP.");
+    } finally {
+      setResending(false);
+    }
   };
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
+    // formats as 2:00 or 1:05 correctly
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
@@ -124,8 +115,10 @@ const VerifyEmail = () => {
           Please enter it below to complete your registration.
         </p>
 
-        {/* Error */}
+        {/* Error & Success Messages */}
         {error && <div className="auth-error">{error}</div>}
+        {successMsg && <div className="auth-success" style={{ background: '#d1fae5', color: '#065f46', padding: '10px', borderRadius: '5px', marginBottom: '10px', textAlign: 'center' }}>{successMsg}</div>}
+
     <div  className="auth-card">
         {/* Form */}
         <form onSubmit={handleSubmit} className="auth-form">
@@ -164,7 +157,9 @@ const VerifyEmail = () => {
             {timer > 0 ? (
               <span className="timer"> Resend in {formatTime(timer)}</span>
             ) : (
-              <button onClick={handleResend} className="resend-btn"> Resend</button>
+              <button onClick={handleResend} className="resend-btn" disabled={resending}>
+                {resending ? "Sending..." : " Resend"}
+              </button>
             )}
           </p>
           <a href="/signup" className="link-text">← Back to Registration</a>

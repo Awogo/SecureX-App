@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logoIcon from "../assets/logo-icon.png";
 import "../styles/auth.css";
+import { apiCall } from "../api"; // Import the helper
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -12,6 +13,7 @@ const Signup = () => {
     password: "",
     confirmPassword: "",
   });
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -40,7 +42,7 @@ const Signup = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (formData.password !== formData.confirmPassword) {
@@ -52,29 +54,17 @@ const Signup = () => {
     setError("");
 
     try {
+      // Remove confirmPassword before sending
       const { confirmPassword, ...dataToSend } = formData;
-      console.log("Sending data:", dataToSend);
-      const response = await fetch("http://100.53.84.123/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(dataToSend),
-      });
 
-      const data = await response.json();
-      console.log("Response:", data);
-      if (response.ok) {
-      console.log("Success:", data.message);
-        navigate("/verify-email", {state: { email: formData.email }});
-      } 
-      else {
-       
-        setError(data.message || "Registration failed");
-      }
+      // Call API
+      await apiCall("/api/auth/register", "POST", dataToSend);
+
+      // Success -> Navigate to Verify Email and pass the email
+      navigate("/verify-email", { state: { email: formData.email } });
 
     } catch (err) {
-      setError("Network error. Please check your connection.");
+      setError(err.message || "Registration failed");
     } finally {
       setLoading(false);
     }

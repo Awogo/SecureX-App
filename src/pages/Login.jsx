@@ -2,13 +2,11 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logoIcon from "../assets/logo-icon.png";
 import "../styles/auth.css";
+import { apiCall } from "../api"; // Import the helper
 
 const Login = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -25,32 +23,17 @@ const Login = () => {
     setError("");
 
     try {
-      // --- API INTEGRATION ---
-      
-      // TODO: Confirm with backend if the path is /auth/login or /login
-      const response = await fetch("http://100.53.84.123/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
+      // 1. Login using the new API helper
+      const data = await apiCall("/api/auth/login", "POST", formData);
 
-      const data = await response.json();
+      // 2. Save Token
+      localStorage.setItem("token", data.token);
 
-      if (response.ok) {
-                     
-        localStorage.setItem("token", data.token);
-        
-        // 2. Redirect to dashboard
-        navigate("/dashboard");
-      } else {
-        
-        setError(data.message || "Invalid credentials");
-      }
+      // 3. Redirect to Dashboard
+      navigate("/dashboard");
 
     } catch (err) {
-      setError("Network error. Please check your connection.");
+      setError(err.message || "Invalid credentials");
     } finally {
       setLoading(false);
     }

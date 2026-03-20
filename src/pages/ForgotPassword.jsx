@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import logoIcon from "../assets/logo-icon.png";
 import "../styles/auth.css";
+import { apiCall } from "../api";
+
 
 const BackToLogin = () => (
   <Link to="/login" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#7A7A7A', textDecoration: 'none', marginTop: '20px' }}>
@@ -26,26 +28,14 @@ const ForgotPassword = () => {
     setError("");
     setSuccess("");
 
-    try {
-      const response = await fetch("http://100.53.84.123/api/auth/forgot-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
+  try {
+      await apiCall("/api/auth/forgot-password", "POST", { email });
+      
+      // Navigate to reset password page, pass email
+      navigate("/reset-password", { state: { email: email } });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        setSuccess("OTP sent successfully!");
-        // Navigate to reset password page and pass the email state
-        setTimeout(() => {
-          navigate("/reset-password", { state: { email: email } });
-        }, 1000);
-      } else {
-        setError(data.message || "Failed to send OTP");
-      }
     } catch (err) {
-      setError("Network error. Please try again.");
+      setError(err.message);
     } finally {
       setLoading(false);
     }

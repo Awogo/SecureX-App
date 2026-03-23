@@ -25,9 +25,9 @@ const Login = () => {
     try {
       // 1. Login using the new API helper
       const data = await apiCall("/api/auth/login", "POST", formData);
-
+        const response = data; // Assuming the API returns { token: "..." }
       // 2. Save Token
-      localStorage.setItem("token", data.token);
+      localStorage.setItem("token", response.token);
 
       // 3. Redirect to Dashboard
       navigate("/dashboard");

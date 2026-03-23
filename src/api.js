@@ -1,32 +1,23 @@
-// src/api.js
-
-const API_BASE_URL = "https://securex-backend-ikr8.onrender.com";
+const BASE_URL = "https://securex-backend-ikr8.onrender.com";
 
 export const apiCall = async (endpoint, method = "GET", data = null) => {
-  const url = `${API_BASE_URL}${endpoint}`;
+  const url = `${BASE_URL}${endpoint}`; // This combines base + endpoint
   const token = localStorage.getItem("token");
 
-  const options = {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-      // Attach token if available (for protected routes)
-      ...(token && { "Authorization": `Bearer ${token}` })
-    },
+  const headers = {
+    "Content-Type": "application/json",
   };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  if (data) {
-    options.body = JSON.stringify(data);
-  }
+  const config = { method, headers, body: data ? JSON.stringify(data) : null };
 
   try {
-    const response = await fetch(url, options);
-    const result = await response.json();
-
+    const response = await fetch(url, config);
     if (!response.ok) {
-      throw new Error(result.message || "Something went wrong");
+      const err = await response.json();
+      throw new Error(err.message || "Request failed");
     }
-    return result;
+    return response.json();
   } catch (error) {
     console.error("API Error:", error);
     throw error;

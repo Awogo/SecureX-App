@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import logoBlue from "../assets/logo-blue.png";
 import "../styles/dashboard.css";
-import { apiCall } from "../api"; // Import the helper
+import { apiCall } from "../api"; // Using the helper as requested
 
 const Dashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -10,108 +10,105 @@ const Dashboard = () => {
   const [activeNav, setActiveNav] = useState("dashboard");
   
   // States for Data
-  const [userData, setUserData] = useState({ name: "User", email: "", avatar: "U" });
-  const [trustScore, setTrustScore] = useState(0);
-  const [stats, setStats] = useState([]);
+  const [userData, setUserData] = useState(null);
+  const [dashboardStats, setDashboardStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
+  
   // --- MAIN DATA FETCHING LOGIC ---
   useEffect(() => {
-    const initDashboard = async () => {
-      const token = localStorage.getItem("token");
-      
-      // 1. Security: If no token, go back to login
-      if (!token) {
-        navigate("/login");
-        return;
-      }
-
+    const fetchData = async () => {
       try {
         setLoading(true);
-
-        // 2. Fetch User Profile (Name, Email, ID)
-        // We need the profile to get the ID for the dashboard stats
-        const profile = await apiCall("/users/profile");
         
-        // Extract ID (Backend might send 'id' or '_id')
-        const userId = profile.id || profile._id;
-
-        // Save User Data for UI
-        const firstName = profile.firstName || "";
-        const lastName = profile.lastName || "";
-        const fullName = `${firstName} ${lastName}`.trim() || profile.email;
+        // 1. Fetch User Profile first (to get the ID)
+        // Using apiCall helper
+        const profileData = await apiCall("/users/profile", "GET");
+        const user = profileData.data || profileData;
         
-        setUserData({
-          name: fullName,
-          email: profile.email,
-          avatar: firstName ? firstName[0].toUpperCase() : "U"
-        });
-
-        // 3. Fetch Dashboard Stats using the ID
-        if (userId) {
-          localStorage.setItem("userId", userId); // Save ID for later use
+        if (user && (user._id || user.id)) {
+          setUserData(user);
+          const userId = user._id || user.id;
+          const statsData = await apiCall(`/api/dashboard/${userId}`, "GET");
           
-          const dashData = await apiCall(`/api/dashboard/${userId}`);
+          const stats = statsData.data || statsData;
+          setDashboardStats(stats);
           
-          setTrustScore(dashData.trustScore || 0);
-          
-          // Map API data to your UI Cards
-          const formattedStats = [
-            { 
-              label: "Today's Sale", 
-              value: `₦${dashData.today?.total?.toLocaleString() || 0}`, 
-              change: `${dashData.today?.growth || 0}%`, 
-              positive: dashData.today?.growth >= 0 
-            },
-            { 
-              label: "This Week", 
-              value: `₦${dashData.week?.total?.toLocaleString() || 0}`, 
-              change: `${dashData.week?.growth || 0}%`, 
-              positive: dashData.week?.growth >= 0 
-            },
-            { 
-              label: "Escrow Held", 
-              value: `₦${dashData.escrowHeld?.toLocaleString() || 0}`, 
-              badge: "Secured", 
-              positive: true 
-            },
-            { 
-              label: "Total Transaction", 
-              value: dashData.totalTransactions || 0, 
-              change: `${dashData.transactionGrowth || 0}%`, 
-              positive: dashData.transactionGrowth >= 0 
-            },
-          ];
-          setStats(formattedStats);
+        } else {
+            if (profileData.message) {
+                setError(profileData.message);
+            }
         }
 
-      } catch (err) {
-        console.error("Dashboard Error:", err);
-        setError(err.message || "Failed to load dashboard");
-        // If token is invalid/expired, send to login
-        if (err.message.includes("Unauthorized") || err.message.includes("token")) {
-           localStorage.removeItem("token");
-           navigate("/login");
-        }
+      } catch (error) {
+        console.error("Failed to fetch dashboard data:", error);
+        setError("Connection error. Please check your network.");
       } finally {
         setLoading(false);
       }
     };
 
-    initDashboard();
+    fetchData();
   }, [navigate]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("userId");
-    navigate("/login");
+  // --- Helper to generate initials for Avatar ---
+  const getInitials = (name) => {
+    if (!name) return "??";
+    return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
 
+  // --- Prepare Stats Data (Use API data if available, else fallback) ---
+  const trustScore = dashboardStats?.trustScore || 0;
+  const stats = [
+    { 
+      label: "Today's Sale", 
+      value: dashboardStats?.todaysSale || "₦0", 
+      change: dashboardStats?.saleChange || "+0%", 
+      positive: true 
+    },
+    { 
+      label: "This Week", 
+      value: dashboardStats?.weeklySale || "₦0", 
+      change: dashboardStats?.weeklyChange || "+0%", 
+      positive: true 
+    },
+    { 
+      label: "Escrow Held", 
+      value: dashboardStats?.escrowHeld || "₦0", 
+      badge: "Secured", 
+      positive: true 
+    },
+    { 
+      label: "Total Transaction", 
+      value: dashboardStats?.totalTransaction || "₦0", 
+      change: dashboardStats?.totalChange || "+0%", 
+      positive: true 
+    },
+  ];
+
+  // --- Quick Actions Data ---
   const quickActions = [
-    { title: "Create Transactions", subtitle: "Start a new escrow transaction", color: "#EEF2FF", route: "/create-transaction" },
-    { title: "Scan OTP", subtitle: "Verify delivery confirmation", color: "#EEF2FF", route: "/scan-otp" },
-    { title: "AI Business Analysis", subtitle: "View intelligent insights", color: "#D1FAE5", route: "/ai-insights" },
+    { 
+      title: "Create Listing", 
+      subtitle: "Post a new item", 
+      icon: "📝", 
+      color: "#E8F4F8", 
+      route: "/create-listing" 
+    },
+    { 
+      title: "Verify Identity", 
+      subtitle: "Complete verification", 
+      icon: "✓", 
+      color: "#F0F8E8", 
+      route: "/verification" 
+    },
+    { 
+      title: "Withdraw Funds", 
+      subtitle: "Withdraw to bank", 
+      icon: "💰", 
+      color: "#F8F0E8", 
+      route: "/withdraw" 
+    },
   ];
 
   // --- RENDER ---
@@ -126,31 +123,39 @@ const Dashboard = () => {
 
         <nav className="sidebar-nav">
           <button className={`nav-item ${activeNav === "dashboard" ? "active" : ""}`} onClick={() => setActiveNav("dashboard")}>
-            {/* Icon SVG */}
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/><rect x="11" y="3" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/><rect x="3" y="11" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/><rect x="11" y="11" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/></svg>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <rect x="3" y="3" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+              <rect x="11" y="3" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+              <rect x="3" y="11" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+              <rect x="11" y="11" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+            </svg>
             <span>Dashboard</span>
           </button>
 
-          <button className={`nav-item ${activeNav === "transactions" ? "active" : ""}`} onClick={() => { setActiveNav("transactions"); navigate("/transactions"); }}>
-             {/* Icon SVG */}
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 5H17M3 10H17M3 15H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+          <button className={`nav-item ${activeNav === "transactions" ? "active" : ""}`}
+           onClick={() => { setActiveNav("transactions"); navigate("/transactions"); }}>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M3 5H17M3 10H17M3 15H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
             <span>Transactions</span>
           </button>
 
-          <button className={`nav-item ${activeNav === "ai" ? "active" : ""}`} onClick={() => { setActiveNav("ai"); navigate("/ai-insights"); }}>
-             {/* Icon SVG */}
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="1.5"/><path d="M10 6V10L13 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+          <button 
+          className={`nav-item ${activeNav === "ai" ? "active" : ""}`} 
+          onClick={() => { setActiveNav("ai"); navigate("/ai-insights"); }}>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="1.5"/>
+              <path d="M10 6V10L13 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
             <span>AI Insights</span>
           </button>
 
           <button className={`nav-item ${activeNav === "verification" ? "active" : ""}`} onClick={() => { setActiveNav("verification"); navigate("/verification"); }}>
-             {/* Icon SVG */}
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2L4 5V9C4 12.5 7 16 10 17C13 16 16 12.5 16 9V5L10 2Z" stroke="currentColor" strokeWidth="1.5"/><path d="M7 10L9 12L13 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
             <span>Verification</span>
           </button>
 
           <button className={`nav-item ${activeNav === "settings" ? "active" : ""}`} onClick={() => { setActiveNav("settings"); navigate("/settings"); }}>
-             {/* Icon SVG */}
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3" stroke="currentColor" strokeWidth="1.5"/><path d="M10 2V4M10 16V18M18 10H16M4 10H2M15.66 4.34L14.24 5.76M5.76 14.24L4.34 15.66M15.66 15.66L14.24 14.24M5.76 5.76L4.34 4.34" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
             <span>Settings</span>
           </button>
@@ -158,19 +163,23 @@ const Dashboard = () => {
 
         <div className="sidebar-footer">
           <div className="user-profile">
-            <div className="user-avatar">{userData.avatar}</div>
+            <div className="user-avatar">{getInitials(userData?.name)}</div>
             <div className="user-info">
-              <p className="user-name">{userData.name}</p>
-              <p className="user-email">{userData.email}</p>
+              <p className="user-name">{userData?.name || "Guest"}</p>
+              <p className="user-email">{userData?.email || "..."}</p>
             </div>
           </div>
-          <button className="sign-out-btn" onClick={handleLogout}>
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M7 13L3 9M3 9L7 5M3 9H11M11 3H13C14.1046 3 15 3.89543 15 5V13C15 14.1046 14.1046 15 13 15H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          <button className="sign-out-btn" onClick={() => {
+            localStorage.removeItem("token");
+            navigate("/login");
+          }}>
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path d="M7 13L3 9M3 9L7 5M3 9H11M11 3H13C14.1046 3 15 3.89543 15 5V13C15 14.1046 14.1046 15 13 15H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
             <span>Sign Out</span>
           </button>
         </div>
       </aside>
-
       {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
 
       {/* Main Content */}
@@ -189,7 +198,7 @@ const Dashboard = () => {
               <span className="notification-badge">2</span>
             </button>
             <button className="user-btn">
-              <div className="user-avatar-small">{userData.avatar}</div>
+              <div className="user-avatar-small">{getInitials(userData?.name)}</div>
             </button>
           </div>
         </header>
@@ -222,7 +231,7 @@ const Dashboard = () => {
                       <circle cx="80" cy="80" r="70" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="12"/>
                       <circle cx="80" cy="80" r="70" fill="none" stroke="white" strokeWidth="12" strokeDasharray="440" strokeDashoffset={440 - (440 * trustScore / 100)} strokeLinecap="round" transform="rotate(-90 80 80)"/>
                     </svg>
-                    <div className="score-number">{trustScore}</div>
+                    <div className="score-number">{dashboardStats?.trustScore || 0}</div>
                   </div>
                 </div>
 
@@ -265,29 +274,58 @@ const Dashboard = () => {
 
               {/* Right Column */}
               <div className="right-column">
-                {/* Transaction Trends Chart (Placeholder) */}
+                {/* Transaction Trends */}
                 <div className="chart-card">
                   <h3>Transaction Trends</h3>
                   <div className="chart-placeholder">
-                     {/* Keep your existing SVG chart here */}
-                     <svg width="100%" height="200" viewBox="0 0 400 200">
-                        <polyline points="0,150 50,140 100,120 150,130 200,110 250,100 300,80 350,70 400,60" fill="none" stroke="#00D9A3" strokeWidth="2"/>
-                        <polyline points="0,150 50,140 100,120 150,130 200,110 250,100 300,80 350,70 400,60 400,200 0,200" fill="url(#gradient)" opacity="0.2"/>
-                        <defs><linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stopColor="#00D9A3" stopOpacity="0.3"/><stop offset="100%" stopColor="#00D9A3" stopOpacity="0"/></linearGradient></defs>
+                    <svg width="100%" height="200" viewBox="0 0 400 200">
+                      <polyline points="0,150 50,140 100,120 150,130 200,110 250,100 300,80 350,70 400,60" 
+                        fill="none" stroke="#00D9A3" strokeWidth="2"/>
+                      <polyline points="0,150 50,140 100,120 150,130 200,110 250,100 300,80 350,70 400,60 400,200 0,200" 
+                        fill="url(#gradient)" opacity="0.2"/>
+                      <defs>
+                        <linearGradient id="gradient" x1="0%" y1="0" x2="0%" y2="100%">
+                          <stop offset="0%" stopColor="#00D9A3" stopOpacity="0.3"/>
+                          <stop offset="100%" stopColor="#00D9A3" stopOpacity="0"/>
+                        </linearGradient>
+                      </defs>
                     </svg>
+                  </div>
+                  <div className="chart-legend">
+                    <div className="legend-item">
+                      <span className="legend-dot transactions"></span>
+                      <span>Transactions</span>
+                    </div>
+                    <div className="legend-item">
+                      <span className="legend-dot amount"></span>
+                      <span>Amount (₦)</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* Payment Distribution Chart (Placeholder) */}
+                {/* Escrow Payment Distribution */}
                 <div className="chart-card">
                   <h3>Escrow Payment Distribution</h3>
                   <div className="pie-chart">
-                    {/* Keep your existing SVG pie chart here */}
-                     <svg viewBox="0 0 200 200" style={{ width: "100%", maxWidth: "200px" }}>
-                        <circle cx="100" cy="100" r="80" fill="none" stroke="#4A5CF5" strokeWidth="40" strokeDasharray="251 502"/>
-                        <circle cx="100" cy="100" r="80" fill="none" stroke="#00D9A3" strokeWidth="40" strokeDasharray="188 502" strokeDashoffset="-251" transform="rotate(0 100 100)"/>
-                        <circle cx="100" cy="100" r="80" fill="none" stroke="#2C36A2" strokeWidth="40" strokeDasharray="63 502" strokeDashoffset="-439"/>
+                    <svg width="200" height="200" viewBox="0 0 200 200">
+                      <circle cx="100" cy="100" r="80" fill="none" stroke="#4A5CF5" strokeWidth="40" strokeDasharray="251 502"/>
+                      <circle cx="100" cy="100" r="80" fill="none" stroke="#00D9A3" strokeWidth="40" strokeDasharray="188 502" strokeDashoffset="-251" transform="rotate(0 100 100)"/>
+                      <circle cx="100" cy="100" r="80" fill="none" stroke="#2C36A2" strokeWidth="40" strokeDasharray="63 502" strokeDashoffset="-439"/>
                     </svg>
+                    <div className="pie-legend">
+                      <div className="pie-legend-item">
+                        <span className="pie-dot" style={{ background: "#4A5CF5" }}></span>
+                        <span>Crypto: 20%</span>
+                      </div>
+                      <div className="pie-legend-item">
+                        <span className="pie-dot" style={{ background: "#00D9A3" }}></span>
+                        <span>Bank Transfer: 35%</span>
+                      </div>
+                      <div className="pie-legend-item">
+                        <span className="pie-dot" style={{ background: "#2C36A2" }}></span>
+                        <span>Cash: 45%</span>
+                      </div>
+                    </div>
                   </div>
                   <button className="see-more-btn">See More</button>
                 </div>

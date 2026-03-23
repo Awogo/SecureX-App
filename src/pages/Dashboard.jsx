@@ -29,7 +29,7 @@ const [userData, setUserData] = useState({
 };
 
   // --- MAIN DATA FETCHING LOGIC ---
- useEffect(() => {
+useEffect(() => {
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -37,36 +37,36 @@ const [userData, setUserData] = useState({
       const profileData = await apiCall("/api/users/profile", "GET");
       console.log("PROFILE RESPONSE:", profileData);
 
-      const user = profileData;
+      // 🔥 HANDLE ALL POSSIBLE BACKEND FORMATS
+      let user = profileData.data || profileData.user || profileData;
 
-      if (!user || !user.id) {
+      // 🔥 NORMALIZE USER OBJECT
+      const normalizedUser = {
+        id: user.id || user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email
+      };
+
+      // ✅ ONLY CHECK USER EXISTS (NOT id anymore)
+      if (!normalizedUser.firstName) {
         throw new Error("Invalid user data");
       }
 
-      setUserData(user);
+      setUserData(normalizedUser);
 
-      const statsData = await apiCall("/api/dashboard/" + user.id, "GET");
-      setDashboardStats(statsData);
+      // 🔥 FETCH DASHBOARD STATS
+      const statsData = await apiCall(`/api/dashboard/${normalizedUser.id}`, "GET");
+      setDashboardStats(statsData.data || statsData);
 
     } catch (error) {
       console.error("Dashboard Error:", error);
 
-      // 🔥 FALLBACK (so demo still works)
+      // ✅ FALLBACK (for demo safety)
       setUserData({
         firstName: "Blessing",
-        lastName: "",
+        lastName: "Demo",
         email: "demo@securex.com"
-      });
-
-      setDashboardStats({
-        trustScore: 89,
-        todaysSale: "₦47,000",
-        weeklySale: "₦285,000",
-        escrowHeld: "₦485,000",
-        totalTransaction: "₦1.2M",
-        saleChange: "+12%",
-        weeklyChange: "+8%",
-        totalChange: "+23%"
       });
 
     } finally {

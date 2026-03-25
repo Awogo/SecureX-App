@@ -162,41 +162,37 @@ const DeliveryCodeSeller = () => {
             {/* Divider */}
             <div className="divider-section"><span className="divider-text">Or share QR Code</span></div>
 
-            {/* QR Scanner Section */}
-            {scanning ? (
-              <div className="qr-scanner-container">
-                <QrReader
-                  delay={300}
-                  onError={handleError}
-                  onScan={(data) => data && setDeliveryCode(data)}
-                  style={{ width: '100%' }}
-                />
-                <button className="btn-cancel" onClick={() => setScanning(false)} style={{marginTop: '15px'}}>
-                  Cancel Scan
-                </button>
-              </div>
-            ) : (
-              <div className="qr-section">
-                <p className="qr-instruction">Let the buyer scan this for instant confirmation</p>
-                <div className="qr-code">
-                  <svg width="200" height="200" viewBox="0 0 200 200">
-                    <rect width="200" height="200" rx="12" fill="#000"/>
-                    <rect x="20" y="20" width="160" height="160" rx="8" stroke="#00D9A3" strokeWidth="4" fill="none"/>
-                    <g fill="#00D9A3">
-                      <rect x="70" y="70" width="15" height="15"/>
-                      <rect x="70" y="115" width="15" height="15"/>
-                      <rect x="115" y="70" width="15" height="15"/>
-                      <rect x="115" y="115" width="15" height="15"/>
-                      <rect x="92" y="92" width="16" height="16"/>
-                    </g>
-                  </svg>
-                </div>
-                <button className="btn-outline" onClick={() => setScanning(true)}>
-                  Scan Buyer's QR
-                </button>
-              </div>
-            )}
+      
+           {/* OTP Section */}
+<div className="otp-section">
+  <p className="otp-label">Enter OTP to confirm delivery</p>
 
+  <div className="otp-inputs">
+    {deliveryCode.split('').map((digit, index) => (
+      <input
+        key={index}
+        type="text"
+        maxLength="1"
+        className="otp-input"
+        value={digit}
+        readOnly
+      />
+    ))}
+  </div>
+
+  <p className="otp-note">
+    Buyer will enter this code to release payment
+  </p>
+</div>
+<button
+  className="btn-verify"
+  onClick={() => {
+    alert("✅ OTP Verified — Payment Released (Demo)");
+    navigate("/transactions");
+  }}
+>
+  Confirm Delivery
+</button>
             {/* How It Works */}
             <div className="how-works-box">
               <h3>How It Works</h3>
@@ -207,10 +203,6 @@ const DeliveryCodeSeller = () => {
                 <li>Payment is instantly released to your account</li>
               </ol>
             </div>
-
-            <button className="btn-verify" onClick={handleGenerateNew}>
-              Generate New Code
-            </button>
           </div>
         </div>
       </main>

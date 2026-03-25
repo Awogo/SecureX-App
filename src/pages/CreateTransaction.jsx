@@ -90,8 +90,7 @@ const payload = {
 
   amount: formData.amount ? Number(formData.amount) : 1000,
 
-  currencyId: formData.currencyId || "NGN",
-
+  currencyId: "c1a2b3d4-e5f6-7890-abcd-1234567890ef",
   otherPartyEmail: formData.counterpartyEmail || "test@email.com",
 
   otherPartyPhone: "08012345678",

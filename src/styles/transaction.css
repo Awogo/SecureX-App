@@ -2331,3 +2331,49 @@ html, body {
   overflow-x: hidden;
   width: 100%;
 }
+
+/* ========================================= */
+/* FIX: RESET STYLES FOR AUTH PAGES          */
+/* Add this to the bottom of transaction.css  */
+/* ========================================= */
+
+/* Prevent transaction styles from breaking Auth pages */
+.auth-page .form-group {
+  margin-bottom: 20px;
+}
+
+.auth-page .form-group input {
+  width: 100%;
+  padding: 14px 16px 14px 48px; /* Ensures text doesn't overlap icon */
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  font-size: 15px;
+  background-color: #FFFFFF;
+  box-sizing: border-box;
+  line-height: 1.5;
+}
+
+.auth-page .form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+/* Force proper layout for Payment Success page */
+.auth-page.payment-success-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 40px 20px;
+  background-color: #F6F7FB;
+}
+
+.auth-page.payment-success-page .auth-card {
+  width: 100%;
+  max-width: 420px;
+  margin-bottom: 20px;
+}

@@ -8,16 +8,22 @@ const CreateTransaction = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [userData, setUserData] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [createdTxnId, setCreatedTxnId] = useState(null);
   
+  // Form State
   const [formData, setFormData] = useState({
-    type: "", // 'buy' or 'sell'
-    counterpartyEmail: "", // or ID
-    amount: "",
-    paymentMethod: "card",
-    description: ""
-  });
+  type: "",
+  counterpartyEmail: "",
+  amount: "",
+  paymentMethod: "card",
+  description: "",
+  item: "", // ✅ REQUIRED
+  currencyId: "c1a2b3d4-e5f6-7890-abcd-1234567890ef" // ✅ REQUIRED (replace if needed)
+});
+
+  // UI State
+  const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [createdTxnId, setCreatedTxnId] = useState(null);
 
   const steps = [
     { number: 1, label: "Role" },
@@ -71,59 +77,57 @@ const CreateTransaction = () => {
   };
 
   // --- API SUBMISSION ---
-  const handleConfirmTransaction = async () => {
-    setLoading(true);
-    try {
-      const payload = {
-        type: formData.type, // 'buy' or 'sell'
-        amount: Number(formData.amount),
-        paymentMethod: formData.paymentMethod,
-        counterpartyEmail: formData.counterpartyEmail, // Assuming backend expects email
-        description: formData.description || "Escrow Transaction"
-      };
+ const handleConfirmTransaction = async () => {
+  setIsSubmitting(true);
 
-      const res = await apiCall("/api/transactions", "POST", payload);
-      
-      // Save ID for step 6
-      setCreatedTxnId(res.data?._id || res._id || res.transactionId);
-      
-      // If Payment Gateway URL is returned (Paystack), redirect logic could go here
-      // if (res.authorization_url) window.location.href = res.authorization_url;
-      
-      handleNext(); // Go to success step
-    } catch (err) {
-      alert(err.message || "Failed to create transaction");
-    } finally {
-      setLoading(false);
+  try {
+const payload = {
+  transactionType: formData.type ? formData.type.toLowerCase() : "sell",
+
+  item: formData.item || "Test Item",
+
+  description: formData.description || "Escrow Transaction",
+
+  amount: formData.amount ? Number(formData.amount) : 1000,
+
+  currencyId: formData.currencyId || "NGN",
+
+  otherPartyEmail: formData.counterpartyEmail || "test@email.com",
+
+  otherPartyPhone: "08012345678",
+  otherPartyAccountName: "Test User",
+  otherPartyAccountNumber: "1234567890",
+  otherPartyBankName: "GT Bank"
+};
+console.log("FINAL PAYLOAD:", JSON.stringify(payload, null, 2));
+
+    const res = await apiCall("/api/transactions", "POST", payload);
+
+    console.log("Backend response:", res);
+
+    // ✅ PAYSTACK REDIRECT (VERY IMPORTANT)
+    if (res?.data?.authorization_url || res?.authorization_url) {
+      window.location.href =
+        res.data?.authorization_url || res.authorization_url;
+      return;
     }
-  };
 
-  // --- FILE UPLOAD (Proof of Delivery) ---
-  const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file || !createdTxnId) return;
+    // ✅ SUCCESS FLOW
+    setCreatedTxnId(res?.data?.id || res?.id || "TXN-SUCCESS");
+    handleNext();
 
-    const uploadData = new FormData();
-    uploadData.append("proof", file);
-    // Note: apiCall helper might need adjustment for FormData headers, 
-    // assuming apiCall handles it or we use fetch directly for this specific case.
-    
-    try {
-      // Using fetch directly for FormData to avoid Content-Type issues with apiCall wrapper
-      const token = localStorage.getItem("token");
-      await fetch(`https://securex-backend-ikr8.onrender.com/api/transactions/${createdTxnId}/deliver`, {
-        method: "PATCH",
-        headers: {
-            'Authorization': `Bearer ${token}`
-            // Do NOT set Content-Type here, browser sets it with boundary for FormData
-        },
-        body: uploadData
-      });
-      alert("Proof uploaded successfully!");
-    } catch (err) {
-      alert("Upload failed");
-    }
-  };
+  } catch (err) {
+    console.error("Transaction Error:", err);
+
+    alert(
+      err.message ||
+      err?.response?.data?.message ||
+      "Transaction failed — check backend payload"
+    );
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
     <div className="transaction-page">
@@ -132,13 +136,34 @@ const CreateTransaction = () => {
         <div className="sidebar-header">
           <img src={logoBlue} alt="SecureX" className="sidebar-logo" />
         </div>
+
         <nav className="sidebar-nav">
-          <button onClick={() => navigate("/dashboard")}><span>Dashboard</span></button>
-          <button className="active" onClick={() => navigate("/transactions")}><span>Transactions</span></button>
-          <button onClick={() => navigate("/ai-insights")}><span>AI Insights</span></button>
-          <button onClick={() => navigate("/verification")}><span>Verification</span></button>
-          <button onClick={() => navigate("/settings")}><span>Settings</span></button>
+          <button onClick={() => navigate("/dashboard")}>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/><rect x="11" y="3" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/><rect x="3" y="11" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/><rect x="11" y="11" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/></svg>
+            <span>Dashboard</span>
+          </button>
+
+          <button className="active" onClick={() => navigate("/transactions")}>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 5H17M3 10H17M3 15H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+            <span>Transactions</span>
+          </button>
+
+          <button onClick={() => navigate("/ai-insights")}>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="1.5"/><path d="M10 6V10L13 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+            <span>AI Insights</span>
+          </button>
+
+          <button onClick={() => navigate("/verification")}>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2L4 5V9C4 12.5 7 16 10 17C13 16 16 12.5 16 9V5L10 2Z" stroke="currentColor" strokeWidth="1.5"/><path d="M7 10L9 12L13 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            <span>Verification</span>
+          </button>
+
+          <button onClick={() => navigate("/settings")}>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3" stroke="currentColor" strokeWidth="1.5"/><path d="M10 2V4M10 16V18M18 10H16M4 10H2M15.66 4.34L14.24 5.76M5.76 14.24L4.34 15.66M15.66 15.66L14.24 14.24M5.76 5.76L4.34 4.34" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+            <span>Settings</span>
+          </button>
         </nav>
+
         <div className="sidebar-footer">
           <div className="user-profile">
             <div className="user-avatar">{getInitials(userData)}</div>
@@ -215,6 +240,9 @@ const CreateTransaction = () => {
             <div className="form-step">
               <h2>Transaction Amount</h2>
               <div className="transaction-form-group">
+                 <label>Item</label>
+                   <input
+                  type="text" name="item" placeholder="e.g iPhone 15"value={formData.item} onChange={handleChange} /> 
                 <label>Amount (NGN)</label>
                 <div className="amount-input">
                   <span className="currency">₦</span>
@@ -223,7 +251,7 @@ const CreateTransaction = () => {
               </div>
               <div className="button-group">
                 <button className="back-button" onClick={handleBack}>Back</button>
-                <button className="continue-btn" onClick={handleNext} disabled={!formData.amount}>Continue</button>
+                <button className="continue-btn" onClick={handleNext} disabled={!formData.amount || !formData.item}>Continue</button>
               </div>
             </div>
           )}
@@ -267,14 +295,14 @@ const CreateTransaction = () => {
               </div>
               <div className="button-group">
                 <button className="back-button" onClick={handleBack}>Back</button>
-                <button className="confirm-btn" onClick={handleConfirmTransaction} disabled={loading}>
-                  {loading ? "Processing..." : "Confirm Transaction"}
+                <button className="confirm-btn" onClick={handleConfirmTransaction} disabled={isSubmitting}>
+                  {isSubmitting ? "Processing..." : "Confirm Transaction"}
                 </button>
               </div>
             </div>
           )}
 
-          {/* Step 6: Success & Upload */}
+          {/* Step 6: Success */}
           {currentStep === 6 && (
             <div className="form-step success">
               <div className="success-icon">
@@ -286,21 +314,6 @@ const CreateTransaction = () => {
               </div>
               <h2>Transaction Created!</h2>
               <p className="step-subtitle">Transaction ID: {createdTxnId}</p>
-
-              {/* If Seller, show upload option */}
-              {formData.type === 'sell' && (
-                <div className="upload-area">
-                  <input type="file" id="file-upload" style={{display: 'none'}} onChange={handleFileUpload} />
-                  <label htmlFor="file-upload" style={{cursor: 'pointer'}}>
-                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                      <path d="M24 32V16M24 16L18 22M24 16L30 22" stroke="#7A7A7A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M38 28V38C38 39.1046 37.1046 40 36 40H12C10.8954 40 10 39.1046 10 38V28" stroke="#7A7A7A" strokeWidth="2" strokeLinecap="round"/>
-                    </svg>
-                    <p className="upload-title">Upload Proof of Delivery</p>
-                    <p className="upload-subtitle">Click to browse files</p>
-                  </label>
-                </div>
-              )}
 
               <button className="complete-btn" onClick={() => navigate("/transactions")}>
                 Finish

@@ -9,8 +9,6 @@ const DeliveryCodeSeller = () => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userData, setUserData] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [scanning, setScanning] = useState(false);
   
   const transactionId = location.state?.transactionId;
   // Static code for demo (In real app, fetch this from API)
@@ -41,19 +39,21 @@ const DeliveryCodeSeller = () => {
     fetchUser();
   }, []);
 
-  const handleGenerateNew = () => {
-    // Mock: Generate random 5 digit code
-    const newCode = Math.floor(10000 + Math.random() * 90000).toString();
-    setDeliveryCode(newCode);
-    alert("New code generated!");
-  };
+    const handleMarkDelivered = async () => {
+    if(!transactionId) return;
+    setLoading(true);
+    try {
+        // API CALL: Mark as Delivered
+        await apiCall(`/api/transactions/${transactionId}/deliver`, "PATCH");
+        alert("Transaction marked as delivered!");
+    } catch (err) {
+        alert(err.message);
+    } finally {
+        setLoading(false);
+    }
+};
 
-  const handleError = (err) => {
-    console.error(err);
-    alert("Failed to access camera");
-  };
-
-  return (
+return (
     <div className="transaction-page">
       {/* Sidebar */}
       <aside className={`transaction-sidebar ${sidebarOpen ? "open" : ""}`}>

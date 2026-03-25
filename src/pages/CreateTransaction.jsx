@@ -83,76 +83,78 @@ const CreateTransaction = () => {
   };
 
   // --- FINAL SUBMISSION LOGIC ---
+   // --- FINAL SUBMISSION LOGIC (FIXED) ---
   const handleConfirmTransaction = async () => {
     setIsSubmitting(true);
     try {
-      // 1. Construct Payload EXACTLY as Backend wants it
+      // 1. Prepare Transaction Payload
       const payload = {
         item: formData.item,
         description: formData.description || "Escrow Transaction",
         amount: Number(formData.amount),
-        currency: "NGN", // "NGN"
-        transactionType: formData.transactionType, // "sell" or "buy"
+        currency: "NGN", 
+        transactionType: formData.transactionType,
         otherPartyEmail: formData.otherPartyEmail,
         otherPartyPhone: formData.otherPartyPhone || "",
         setDeliveryDays: Number(formData.setDeliveryDays) || 2,
       };
 
+      // Attach YOUR ID
       if (formData.transactionType === 'sell') {
-        payload.sellerId = userData.id;
+          payload.sellerId = userData.id; 
       } else {
-        payload.buyerId = userData.id;
+          payload.buyerId = userData.id;
       }
-      
-      console.log("Submitting Payload:", payload);
+
+      console.log("Sending Payload:", payload);
 
       // 2. Call Create Transaction API
       const txnRes = await apiCall("/api/transactions", "POST", payload);
-      const txnId = txnRes.id || txnRes._id || txnRes.reference;
+      
+      console.log("---- FULL TRANSACTION RESPONSE ----", txnRes);
+
+      // 3. Extract ID (Checking multiple possible locations)
+      const txnData = txnRes.data || txnRes.transaction || txnRes; // Handle nesting
+      const txnId = txnData.id || txnData._id || txnData.reference;
       
       if (!txnId) {
-        throw new Error("Transaction created but no ID returned.");
+        // If still no ID, throw error with details
+        throw new Error("Transaction ID missing. Check console for response structure.");
       }
       
       setCreatedTxnId(txnId);
-      console.log("Transaction Created ID:", txnId);
+      console.log("Extracted Transaction ID:", txnId);
 
-      // 3. Get Payment Link using the endpoint provided by backend
-      // We assume if I am the BUYER, I need to pay now.
-      if (formData.transactionType === 'buy') {
-          const paymentPayload = {
-            meta: {
-              amount: Number(formData.amount),
-              email: userData.email,
-              txnId: txnId // Pass ID just in case backend needs it
-            },
-            redirect_url: "https://securex-frontend.vercel.app/payment-success",
-            payment_merchant: "Paystack",
-            payment_title: formData.item,
-            payment_for: "transaction"
-          };
+      // 3. Prepare Payment Payload (MATCHING EXACT BACKEND EXAMPLE)
+      const paymentPayload = {
+        meta: {
+          amount: Number(formData.amount), // Amount in Naira (Backend handles Kobo conversion)
+          email: userData.email
+        },
+        // Use your deployed frontend URL here so Paystack redirects back to your site
+        redirect_url: `${window.location.origin}/payment-success?ref=${txnId}`, 
+        payment_merchant: "Paystack",
+        payment_title: formData.item,
+        payment_for: "transaction"
+      };
 
-          console.log("Getting Payment Link:", paymentPayload);
-
-          const payRes = await apiCall("/api/payment/get-link", "POST", paymentPayload);
-
-          // Redirect to Paystack
-          if (payRes.authorization_url) {
-            window.location.href = payRes.authorization_url;
-          } else if (payRes.data?.authorization_url) {
-            window.location.href = payRes.data.authorization_url;
-          } else {
-             // If no link returned, proceed to success screen
-             handleNext();
-          }
+      const payRes = await apiCall("/api/payment/get-link", "POST", paymentPayload);
+    
+      
+      if (payRes.authorization_url) {
+        window.location.href = payRes.authorization_url;
+      } else if (payRes.data?.authorization_url) {
+        window.location.href = payRes.data.authorization_url;
       } else {
-          // If I am the SELLER, no payment needed yet, just success screen
-          handleNext();
+        // If no link (e.g. Seller flow), go to escrow
+        navigate("/payment-escrow", { state: { transactionId: txnId } });
       }
 
     } catch (err) {
       console.error("Transaction Error:", err);
-      alert(err.message || "Failed to process transaction");
+      // Show specific backend error message if available
+      const msg = err.message || "Failed to process transaction";
+      alert(msg);
     } finally {
       setIsSubmitting(false);
     }

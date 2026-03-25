@@ -9,19 +9,20 @@ const CreateTransaction = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [userData, setUserData] = useState(null);
   
-  // Form State
+  // Form State - Matching the NEW Backend Payload
   const [formData, setFormData] = useState({
-  type: "",
-  counterpartyEmail: "",
-  amount: "",
-  paymentMethod: "card",
-  description: "",
-  item: "", // ✅ REQUIRED
-  currencyId: "c1a2b3d4-e5f6-7890-abcd-1234567890ef" // ✅ REQUIRED (replace if needed)
-});
+    transactionType: "sell", 
+    item: "",
+    description: "",
+    amount: "",
+    currency: "NGN", // Changed from currencyId to currency string
+    otherPartyEmail: "",
+    otherPartyPhone: "",
+    setDeliveryDays: 2, // New field
+    // Note: We will inject buyerId/sellerId dynamically during submission
+  });
 
   // UI State
-  const [loading, setLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdTxnId, setCreatedTxnId] = useState(null);
 
@@ -29,7 +30,7 @@ const CreateTransaction = () => {
     { number: 1, label: "Role" },
     { number: 2, label: "Details" },
     { number: 3, label: "Amount" },
-    { number: 4, label: "Payment" },
+    { number: 4, label: "Delivery" },
     { number: 5, label: "Review" },
     { number: 6, label: "Complete" },
   ];
@@ -47,7 +48,12 @@ const CreateTransaction = () => {
             firstName = parts[0];
             lastName = parts.slice(1).join(" ");
         }
-        setUserData({ firstName, lastName, email: rawUser.email });
+        setUserData({ 
+          id: rawUser._id || rawUser.id, // We need the ID for the payload
+          firstName, 
+          lastName, 
+          email: rawUser.email 
+        });
       } catch (err) {
         console.error("Not logged in");
         navigate("/login");
@@ -76,57 +82,81 @@ const CreateTransaction = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // --- API SUBMISSION ---
- const handleConfirmTransaction = async () => {
-  setIsSubmitting(true);
+  // --- FINAL SUBMISSION LOGIC ---
+  const handleConfirmTransaction = async () => {
+    setIsSubmitting(true);
+    try {
+      // 1. Construct Payload EXACTLY as Backend wants it
+      const payload = {
+        item: formData.item,
+        description: formData.description || "Escrow Transaction",
+        amount: Number(formData.amount),
+        currency: "NGN", // "NGN"
+        transactionType: formData.transactionType, // "sell" or "buy"
+        otherPartyEmail: formData.otherPartyEmail,
+        otherPartyPhone: formData.otherPartyPhone || "",
+        setDeliveryDays: Number(formData.setDeliveryDays) || 2,
+      };
 
-  try {
-const payload = {
-  transactionType: formData.type ? formData.type.toLowerCase() : "sell",
+      if (formData.transactionType === 'sell') {
+        payload.sellerId = userData.id;
+      } else {
+        payload.buyerId = userData.id;
+      }
+      
+      console.log("Submitting Payload:", payload);
 
-  item: formData.item || "Test Item",
+      // 2. Call Create Transaction API
+      const txnRes = await apiCall("/api/transactions", "POST", payload);
+      const txnId = txnRes.id || txnRes._id || txnRes.reference;
+      
+      if (!txnId) {
+        throw new Error("Transaction created but no ID returned.");
+      }
+      
+      setCreatedTxnId(txnId);
+      console.log("Transaction Created ID:", txnId);
 
-  description: formData.description || "Escrow Transaction",
+      // 3. Get Payment Link using the endpoint provided by backend
+      // We assume if I am the BUYER, I need to pay now.
+      if (formData.transactionType === 'buy') {
+          const paymentPayload = {
+            meta: {
+              amount: Number(formData.amount),
+              email: userData.email,
+              txnId: txnId // Pass ID just in case backend needs it
+            },
+            redirect_url: "https://securex-frontend.vercel.app/payment-success",
+            payment_merchant: "Paystack",
+            payment_title: formData.item,
+            payment_for: "transaction"
+          };
 
-  amount: formData.amount ? Number(formData.amount) : 1000,
+          console.log("Getting Payment Link:", paymentPayload);
 
-  currencyId: "c1a2b3d4-e5f6-7890-abcd-1234567890ef",
-  otherPartyEmail: formData.counterpartyEmail || "test@email.com",
+          const payRes = await apiCall("/api/payment/get-link", "POST", paymentPayload);
 
-  otherPartyPhone: "08012345678",
-  otherPartyAccountName: "Test User",
-  otherPartyAccountNumber: "1234567890",
-  otherPartyBankName: "GT Bank"
-};
-console.log("FINAL PAYLOAD:", JSON.stringify(payload, null, 2));
+          // Redirect to Paystack
+          if (payRes.authorization_url) {
+            window.location.href = payRes.authorization_url;
+          } else if (payRes.data?.authorization_url) {
+            window.location.href = payRes.data.authorization_url;
+          } else {
+             // If no link returned, proceed to success screen
+             handleNext();
+          }
+      } else {
+          // If I am the SELLER, no payment needed yet, just success screen
+          handleNext();
+      }
 
-    const res = await apiCall("/api/transactions", "POST", payload);
-
-    console.log("Backend response:", res);
-
-    // ✅ PAYSTACK REDIRECT (VERY IMPORTANT)
-    if (res?.data?.authorization_url || res?.authorization_url) {
-      window.location.href =
-        res.data?.authorization_url || res.authorization_url;
-      return;
+    } catch (err) {
+      console.error("Transaction Error:", err);
+      alert(err.message || "Failed to process transaction");
+    } finally {
+      setIsSubmitting(false);
     }
-
-    // ✅ SUCCESS FLOW
-    setCreatedTxnId(res?.data?.id || res?.id || "TXN-SUCCESS");
-    handleNext();
-
-  } catch (err) {
-    console.error("Transaction Error:", err);
-
-    alert(
-      err.message ||
-      err?.response?.data?.message ||
-      "Transaction failed — check backend payload"
-    );
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+  };
 
   return (
     <div className="transaction-page">
@@ -177,7 +207,7 @@ console.log("FINAL PAYLOAD:", JSON.stringify(payload, null, 2));
       {/* Main Content */}
       <main className="transaction-main">
         <header className="transaction-header">
-          <button className="back-btn" onClick={() => navigate("/transactions")}>
+          <button className="back-btn" onClick={() => navigate(-1)}>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12 4L6 10L12 16" stroke="#1E1E1E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
             <span>Create Transaction</span>
           </button>
@@ -199,55 +229,74 @@ console.log("FINAL PAYLOAD:", JSON.stringify(payload, null, 2));
         </div>
 
         <div className="form-container">
+          
           {/* Step 1: Role Selection */}
           {currentStep === 1 && (
             <div className="form-step">
               <h2>I am...</h2>
               <p className="step-subtitle">Choose your role in this transaction</p>
               <div className="role-options">
-                <div className={`role-card ${formData.type === "sell" ? "selected" : ""}`} onClick={() => setFormData({ ...formData, type: "sell" })}>
-                  <h3>Seller</h3>
+                <div className={`role-card ${formData.transactionType === "sell" ? "selected" : ""}`} 
+                     onClick={() => setFormData({ ...formData, transactionType: "sell" })}>
+                  <h3>Selling</h3>
                   <p>I'm selling a product or a service</p>
                 </div>
-                <div className={`role-card ${formData.type === "buy" ? "selected" : ""}`} onClick={() => setFormData({ ...formData, type: "buy" })}>
+                <div className={`role-card ${formData.transactionType === "buy" ? "selected" : ""}`} 
+                     onClick={() => setFormData({ ...formData, transactionType: "buy" })}>
                   <h3>Buyer</h3>
                   <p>I'm purchasing from a seller</p>
                 </div>
               </div>
-              {formData.type && <button className="continue-btn" onClick={handleNext}>Continue</button>}
+              {formData.transactionType && <button className="continue-btn" onClick={handleNext}>Continue</button>}
             </div>
           )}
 
           {/* Step 2: Counterparty Info */}
           {currentStep === 2 && (
             <div className="form-step">
-              <h2>{formData.type === 'sell' ? "Who is the Buyer?" : "Who is the Seller?"}</h2>
-              <p className="step-subtitle">Enter their email address</p>
+              <h2>{formData.transactionType === 'sell' ? "Who is the Buyer?" : "Who is the Seller?"}</h2>
+              <p className="step-subtitle">Identify your counterparty</p>
+              
               <div className="transaction-form-group">
                 <label>Email Address</label>
-                <input type="email" name="counterpartyEmail" placeholder="counterparty@example.com" value={formData.counterpartyEmail} onChange={handleChange} />
+                <input type="email" name="otherPartyEmail" placeholder="counterparty@example.com" value={formData.otherPartyEmail} onChange={handleChange} />
               </div>
+              
+              <div className="transaction-form-group">
+                <label>Phone Number</label>
+                <input type="text" name="otherPartyPhone" placeholder="08012345678" value={formData.otherPartyPhone} onChange={handleChange} />
+              </div>
+
               <div className="button-group">
                 <button className="back-button" onClick={handleBack}>Back</button>
-                <button className="continue-btn" onClick={handleNext} disabled={!formData.counterpartyEmail}>Continue</button>
+                <button className="continue-btn" onClick={handleNext} disabled={!formData.otherPartyEmail}>Continue</button>
               </div>
             </div>
           )}
 
-          {/* Step 3: Amount */}
+          {/* Step 3: Item & Amount */}
           {currentStep === 3 && (
             <div className="form-step">
-              <h2>Transaction Amount</h2>
+              <h2>Transaction Details</h2>
+              
               <div className="transaction-form-group">
-                 <label>Item</label>
-                   <input
-                  type="text" name="item" placeholder="e.g iPhone 15"value={formData.item} onChange={handleChange} /> 
+                <label>Item Name</label>
+                <input type="text" name="item" placeholder="e.g. iPhone 15" value={formData.item} onChange={handleChange} />
+              </div>
+
+              <div className="transaction-form-group">
+                <label>Description</label>
+                <input type="text" name="description" placeholder="Brief description" value={formData.description} onChange={handleChange} />
+              </div>
+
+              <div className="transaction-form-group">
                 <label>Amount (NGN)</label>
                 <div className="amount-input">
                   <span className="currency">₦</span>
                   <input type="number" name="amount" placeholder="0.00" value={formData.amount} onChange={handleChange} />
                 </div>
               </div>
+
               <div className="button-group">
                 <button className="back-button" onClick={handleBack}>Back</button>
                 <button className="continue-btn" onClick={handleNext} disabled={!formData.amount || !formData.item}>Continue</button>
@@ -255,18 +304,17 @@ console.log("FINAL PAYLOAD:", JSON.stringify(payload, null, 2));
             </div>
           )}
 
-          {/* Step 4: Payment Method */}
+          {/* Step 4: Delivery Details */}
           {currentStep === 4 && (
             <div className="form-step">
-              <h2>Select Payment Method</h2>
-              <div className="payment-options">
-                <div className={`payment-card ${formData.paymentMethod === "card" ? "selected" : ""}`} onClick={() => setFormData({ ...formData, paymentMethod: "card" })}>
-                  <span>Credit/Debit Card</span>
-                </div>
-                <div className={`payment-card ${formData.paymentMethod === "bank" ? "selected" : ""}`} onClick={() => setFormData({ ...formData, paymentMethod: "bank" })}>
-                  <span>Bank Transfer</span>
-                </div>
+              <h2>Delivery Details</h2>
+              <p className="step-subtitle">Set the expected delivery timeline</p>
+
+              <div className="transaction-form-group">
+                <label>Delivery Days (How many days?)</label>
+                <input type="number" name="setDeliveryDays" placeholder="2" value={formData.setDeliveryDays} onChange={handleChange} />
               </div>
+
               <div className="button-group">
                 <button className="back-button" onClick={handleBack}>Back</button>
                 <button className="continue-btn" onClick={handleNext}>Continue</button>
@@ -277,21 +325,32 @@ console.log("FINAL PAYLOAD:", JSON.stringify(payload, null, 2));
           {/* Step 5: Review */}
           {currentStep === 5 && (
             <div className="form-step">
-              <h2>Review Details</h2>
+              <h2>Review & Confirm</h2>
+              <p className="step-subtitle">Verify all transaction details</p>
+
               <div className="review-card">
                 <div className="review-row">
                   <span className="review-label">Role</span>
-                  <span className="review-value">{formData.type === 'sell' ? 'Seller' : 'Buyer'}</span>
+                  <span className="review-value">{formData.transactionType === 'sell' ? 'Seller' : 'Buyer'}</span>
+                </div>
+                <div className="review-row">
+                  <span className="review-label">Item</span>
+                  <span className="review-value">{formData.item}</span>
                 </div>
                 <div className="review-row">
                   <span className="review-label">Counterparty</span>
-                  <span className="review-value">{formData.counterpartyEmail}</span>
+                  <span className="review-value">{formData.otherPartyEmail}</span>
                 </div>
                 <div className="review-row">
                   <span className="review-label">Amount</span>
                   <span className="review-value amount">₦{Number(formData.amount).toLocaleString()}</span>
                 </div>
+                <div className="review-row">
+                  <span className="review-label">Delivery Days</span>
+                  <span className="review-value">{formData.setDeliveryDays} Days</span>
+                </div>
               </div>
+
               <div className="button-group">
                 <button className="back-button" onClick={handleBack}>Back</button>
                 <button className="confirm-btn" onClick={handleConfirmTransaction} disabled={isSubmitting}>
@@ -313,9 +372,15 @@ console.log("FINAL PAYLOAD:", JSON.stringify(payload, null, 2));
               </div>
               <h2>Transaction Created!</h2>
               <p className="step-subtitle">Transaction ID: {createdTxnId}</p>
+              
+              {formData.transactionType === 'buy' ? (
+                 <p className="step-subtitle">Redirecting to payment...</p>
+              ) : (
+                 <p className="step-subtitle">Waiting for buyer to accept and pay.</p>
+              )}
 
               <button className="complete-btn" onClick={() => navigate("/transactions")}>
-                Finish
+                View Transactions
               </button>
             </div>
           )}

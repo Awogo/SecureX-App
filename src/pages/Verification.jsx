@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import logoBlue from "../assets/logo-blue.png";
 import "../styles/verification.css";
-import { apiCall } from "../api"; 
 
 const Verification = () => {
   const navigate = useNavigate();
@@ -15,13 +14,15 @@ const Verification = () => {
   const [kycLoading, setKycLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  
+  // File upload states
+  const [cacDocument, setCacDocument] = useState(null);
+  const [utilityBill, setUtilityBill] = useState(null);
 
-  // --- FORM DATA (Matching Image & API) ---
+  // --- FORM DATA (Matching API) ---
   const [kycData, setKycData] = useState({
     businessName: "",
-    registrationNumber: "",
-    businessType: "LLC",
-    address: "",
+    idType: "INTERNATIONAL_PASSPORT",
     phoneNumber: "",
     governmentId: "",
     accountNumber: "",
@@ -40,6 +41,36 @@ const Verification = () => {
       return (parts[0][0] + (parts[1] ? parts[1][0] : "")).toUpperCase();
     }
     return user.email?.[0]?.toUpperCase() || "U";
+  };
+
+  // --- API CALL HELPER ---
+  const apiCall = async (endpoint, method = "GET", body = null) => {
+    const token = localStorage.getItem("token");
+    const headers = {
+      "Content-Type": "application/json",
+    };
+
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const options = {
+      method,
+      headers,
+    };
+
+    if (body && method !== "GET") {
+      options.body = JSON.stringify(body);
+    }
+
+    const response = await fetch(`${import.meta.env.VITE_API_URL}${endpoint}`, options);
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Request failed");
+    }
+
+    return response.json();
   };
 
   // --- 1. FETCH USER PROFILE ---
@@ -63,13 +94,19 @@ const Verification = () => {
           firstName: firstName || "User",
           lastName: lastName || "",
           email: rawUser.email,
-          trustScore: rawUser.trustScore || 85
+          trustScore: rawUser.trustScore || 89,
+          kycCompleted: rawUser.kycCompleted || false
         };
         
         setUserData(normalizedUser);
       } catch (error) {
         console.error("Failed to load profile:", error);
-        setUserData({ firstName: "Guest", lastName: "", email: "guest@example.com", trustScore: 0 });
+        setUserData({ 
+          firstName: "Guest", 
+          lastName: "", 
+          email: "guest@example.com", 
+          trustScore: 0 
+        });
       } finally {
         setLoading(false);
       }
@@ -84,6 +121,30 @@ const Verification = () => {
     setKycData(prev => ({ ...prev, [name]: value }));
   };
 
+  // --- FILE UPLOAD HANDLERS ---
+  const handleFileChange = (e, fileType) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        setError("File size should not exceed 5MB");
+        return;
+      }
+      
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+      if (!allowedTypes.includes(file.type)) {
+        setError("Only JPG, PNG, and PDF files are allowed");
+        return;
+      }
+
+      if (fileType === 'cac') {
+        setCacDocument(file);
+      } else if (fileType === 'utility') {
+        setUtilityBill(file);
+      }
+      setError("");
+    }
+  };
+
   // --- 2. KYC SUBMISSION ---
   const handleKycSubmit = async (e) => {
     e.preventDefault();
@@ -91,10 +152,22 @@ const Verification = () => {
     setError("");
     setSuccess("");
 
+    // Validation
+    if (!kycData.phoneNumber || !kycData.governmentId || !kycData.accountNumber || !kycData.bankCode) {
+      setError("Please fill in all required fields");
+      setKycLoading(false);
+      return;
+    }
+
     try {
       const response = await apiCall("/api/auth/update-kyc", "POST", kycData);
-      if (response.success || response.message) {
+      
+      if (response.message || response.success) {
         setSuccess(response.message || "KYC Updated Successfully!");
+        // Optionally refresh user data
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
       } else {
         setError("Failed to update KYC. Please check your details.");
       }
@@ -105,13 +178,13 @@ const Verification = () => {
     }
   };
 
-  // --- STATIC UI DATA WITH EXACT SVGS RESTORED ---
+  // --- STATIC UI DATA ---
   const verificationSteps = [
     {
       id: 1,
       title: "Identity Verification",
       description: "Verify your identity with government-issued ID",
-      status: "completed",
+      status: userData?.kycCompleted ? "completed" : "in-progress",
       icon: (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
           <path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12Z" stroke="currentColor" strokeWidth="2"/>
@@ -237,22 +310,23 @@ const Verification = () => {
             <div className="banner-content">
               <div className="banner-text">
                 <h2>Boost Your Trust Score</h2>
-                <p>Complete all verification steps to increase your trust score and unlock higher transaction limits.</p>
+                <p>Complete all verification steps to increase your trust score and unlock higher transaction limits. Verified users are 3x more likely to complete successful transactions.</p>
                 <div className="score-progress">
-                  <div className="progress-bar">
-                    <div className="progress-fill" style={{ width: `${userData?.trustScore || 0}%` }}></div>
+                  <div className="score-labels-top">
+                    <span className="current-label">Current Trust Score</span>
+                    <span className="potential-label">Potential Score</span>
                   </div>
-                  <div className="score-labels">
-                    <span className="current-score">Current Trust Score: <strong>{userData?.trustScore || 0}</strong></span>
-                    <span className="potential-score">Potential Score: <strong className="green">95+</strong></span>
+                  <div className="score-values">
+                    <span className="current-score-big">{userData?.trustScore || 89}</span>
+                    <span className="potential-score-big green">95+</span>
                   </div>
                 </div>
               </div>
               <div className="banner-icon">
-                <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                  <circle cx="24" cy="24" r="20" fill="rgba(255,255,255,0.2)"/>
-                  <path d="M24 8L14 14V22C14 28.5 19 35 24 36C29 35 34 28.5 34 22V14L24 8Z" fill="white"/>
-                  <path d="M20 24L22 26L28 20" stroke="#4A5CF5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
+                  <circle cx="60" cy="60" r="50" fill="rgba(255,255,255,0.15)"/>
+                  <path d="M60 20L35 35V55C35 71.25 47.5 87.5 60 90C72.5 87.5 85 71.25 85 55V35L60 20Z" fill="white"/>
+                  <path d="M50 60L55 65L70 50" stroke="#4A5CF5" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
             </div>
@@ -292,14 +366,12 @@ const Verification = () => {
                   <h3>{step.title}</h3>
                   <p>{step.description}</p>
                   
-                  {/* Action Buttons Logic (Optional visual) */}
-                  {step.status === 'completed' && (
-                    <button className="step-btn view">
+                  {step.id === 3 && (
+                    <button className="step-btn start">
                       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                        <path d="M1 8C1 8 3.5 3 8 3C12.5 3 15 8 15 8C15 8 12.5 13 8 13C3.5 13 1 8 1 8Z" stroke="currentColor" strokeWidth="1.5"/>
-                        <circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.5"/>
+                        <path d="M5 8L8 11L13 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
-                      View Details
+                      Start Verification
                     </button>
                   )}
                 </div>
@@ -322,7 +394,7 @@ const Verification = () => {
                   </div>
                   <div>
                     <h3>Identity Verified</h3>
-                    <p>Your identity has been successfully verified</p>
+                    <p>Your identity has been successfully verified on Feb 15, 2024</p>
                   </div>
                 </div>
 
@@ -360,8 +432,15 @@ const Verification = () => {
             {/* RIGHT: BUSINESS FORM */}
             <div className="business-form-section">
               <div className="form-card">
+                <div className="optional-badge">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <circle cx="8" cy="8" r="7" stroke="#4A5CF5" strokeWidth="1.5"/>
+                    <path d="M8 4V8M8 11H8.01" stroke="#4A5CF5" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                  <span>Optional Verification</span>
+                </div>
                 <h3>Business Information</h3>
-                <p className="form-subtitle">Complete your business verification (optional)</p>
+                <p className="form-subtitle">Business verification increases your trust score and unlocks higher transaction limits</p>
                 
                 <form onSubmit={handleKycSubmit} className="kyc-form">
                   {error && <div className="auth-error">{error}</div>}
@@ -372,60 +451,102 @@ const Verification = () => {
                     <input 
                       type="text" 
                       name="businessName" 
-                      placeholder="Enter business name" 
+                      placeholder="Enter your business name" 
                       value={kycData.businessName}
                       onChange={handleKycChange}
                     />
                   </div>
 
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label>Registration Number</label>
-                      <input 
-                        type="text" 
-                        name="registrationNumber" 
-                        placeholder="RC-123456" 
-                        value={kycData.registrationNumber}
-                        onChange={handleKycChange}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Business Type</label>
-                      <select 
-                        name="businessType" 
-                        value={kycData.businessType}
-                        onChange={handleKycChange}
-                      >
-                        <option value="LLC">LLC</option>
-                        <option value="PLC">PLC</option>
-                        <option value="Sole Proprietor">Sole Proprietor</option>
-                      </select>
-                    </div>
-                  </div>
-
                   <div className="form-group">
-                    <label>Office Address</label>
+                    <label>Business Registration Number</label>
                     <input 
                       type="text" 
-                      name="address" 
-                      placeholder="Enter business address" 
-                      value={kycData.address}
+                      name="governmentId" 
+                      placeholder="Enter registration number (RC, BN, etc.)" 
+                      value={kycData.governmentId}
                       onChange={handleKycChange}
+                      required
                     />
                   </div>
 
-                  <div className="upload-grid">
-                    <div className="upload-box">
-                      <span>+</span>
-                      <p>Upload CAC Document</p>
-                    </div>
-                    <div className="upload-box">
-                      <span>+</span>
-                      <p>Upload Utility Bill</p>
+                  <div className="form-group">
+                    <label>Business Type</label>
+                    <select 
+                      name="idType" 
+                      value={kycData.idType}
+                      onChange={handleKycChange}
+                    >
+                      <option value="INTERNATIONAL_PASSPORT">International Passport</option>
+                      <option value="DRIVERS_LICENSE">Driver's License</option>
+                      <option value="NATIONAL_ID">National ID</option>
+                      <option value="VOTERS_CARD">Voter's Card</option>
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Business Address</label>
+                    <input 
+                      type="text" 
+                      name="phoneNumber" 
+                      placeholder="Enter your business address" 
+                      value={kycData.phoneNumber}
+                      onChange={handleKycChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="upload-section">
+                    <label className="section-label">Upload Business Documents</label>
+                    <div className="upload-grid">
+                      <div className="upload-box">
+                        <input 
+                          type="file" 
+                          id="cac-upload" 
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          onChange={(e) => handleFileChange(e, 'cac')}
+                          style={{display: 'none'}}
+                        />
+                        <label htmlFor="cac-upload" className="upload-label">
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="#4A5CF5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M7 10L12 15L17 10" stroke="#4A5CF5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M12 15V3" stroke="#4A5CF5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                          <p className="upload-title">Upload Business Registration Certificate</p>
+                          {cacDocument ? (
+                            <p className="file-name">{cacDocument.name}</p>
+                          ) : (
+                            <p className="upload-subtitle">Choose file</p>
+                          )}
+                        </label>
+                      </div>
+
+                      <div className="upload-box">
+                        <input 
+                          type="file" 
+                          id="utility-upload" 
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          onChange={(e) => handleFileChange(e, 'utility')}
+                          style={{display: 'none'}}
+                        />
+                        <label htmlFor="utility-upload" className="upload-label">
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="#4A5CF5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M7 10L12 15L17 10" stroke="#4A5CF5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M12 15V3" stroke="#4A5CF5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                          <p className="upload-title">Upload Tax Identification Number (TIN)</p>
+                          {utilityBill ? (
+                            <p className="file-name">{utilityBill.name}</p>
+                          ) : (
+                            <p className="upload-subtitle">Choose file</p>
+                          )}
+                        </label>
+                      </div>
                     </div>
                   </div>
 
-                  <button type="submit" className="auth-button" disabled={kycLoading}>
+                  <button type="submit" className="submit-verification-btn" disabled={kycLoading}>
                     {kycLoading ? "Submitting..." : "Submit for Verification"}
                   </button>
                 </form>

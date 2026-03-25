@@ -21,12 +21,12 @@ const [userData, setUserData] = useState({
   const [error, setError] = useState("");
 
   // --- HELPER FUNCTION ---
- const getInitials = (user) => {
-  if (!user) return "??";
-  const first = user.firstName?.[0] || "";
-  const last = user.lastName?.[0] || "";
-  return (first + last).toUpperCase();
-};
+  const getInitials = (user) => {
+    if (!user) return "??";
+    const first = user.firstName?.[0] || "";
+    const last = user.lastName?.[0] || "";
+    return (first + last).toUpperCase() || user.email?.[0]?.toUpperCase() || " "
+  };
 
   // --- MAIN DATA FETCHING LOGIC ---
 useEffect(() => {

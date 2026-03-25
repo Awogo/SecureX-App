@@ -14,6 +14,9 @@ import DeliveryCodeBuyer from "./pages/DeliveryCodeBuyer";
 import PaymentEscrow from "./pages/PaymentEscrow";
 import TransactionDetails from "./pages/TransactionDetails";
 import Verification from "./pages/Verification";
+import AIInsights from "./pages/AiInsights";
+import Settings from "./pages/Settings";
+
 
 function App() {
   return (
@@ -34,6 +37,8 @@ function App() {
         <Route path="/delivery-code-buyer" element={<DeliveryCodeBuyer />} />
         <Route path="/payment-escrow" element={<PaymentEscrow />} />
         <Route path="/verification" element={<Verification />} />
+        <Route path="/ai-insights" element={<AIInsights />} />
+        <Route path="/settings" element={<Settings />} />
       </Routes>
     </Router>
   );

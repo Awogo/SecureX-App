@@ -9,7 +9,8 @@ const PaymentSuccess = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate a small delay for verification
+    const ref = searchParams.get("ref") || searchParams.get("reference");
+   
     const timer = setTimeout(() => setLoading(false), 2000);
     return () => clearTimeout(timer);
   }, []);

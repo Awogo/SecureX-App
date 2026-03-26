@@ -11,7 +11,7 @@ const DeliveryCodeBuyer = () => {
   const [code, setCode] = useState(["", "", "", "", ""]);
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [viewMode, setViewMode] = useState("buyer");
+  
   
   // Get transactionId from navigation state
   const transactionId = location.state?.transactionId;
@@ -66,37 +66,29 @@ const DeliveryCodeBuyer = () => {
   };
 
   // --- API: Confirm Delivery ---
+  // Inside DeliveryCodeBuyer.jsx
+
   const handleVerify = async () => {
     const enteredCode = code.join("");
-    if (enteredCode.length !== 5) {
-      alert("Please enter the complete 5-digit code");
-      return;
-    }
     
-    if(!transactionId) {
-      alert("Error: Transaction ID is missing.");
-      return;
-    }
-
     setLoading(true);
     try {
-      await apiCall(`/api/transactions/${transactionId}/confirmDeliveryIsCompleted`, "PUT", {
-        deliveryCode: enteredCode
-      });
+      // PAYLOAD: Matches Swagger { "otp": "..." }
+      const payload = { otp: enteredCode };
+
+      await apiCall(`/api/transactions/${transactionId}/confirmDeliveryIsCompleted`, "PUT", payload);
 
       alert("Delivery confirmed! Payment released to seller.");
       navigate("/dashboard");
     } catch (err) {
-      alert(err.message || "Invalid code or verification failed.");
+      alert(err.message || "Invalid code.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Simple Scan Handler (No external library needed)
+
   const handleScanClick = () => {
-    // In a real app, this would open a camera. 
-    // For now, we just alert the user to type the code.
     alert("Camera scanning requires installing a library. Please enter the code manually.");
   };
 
@@ -217,22 +209,7 @@ const DeliveryCodeBuyer = () => {
             <button className="btn-verify" onClick={handleVerify} disabled={loading}>
               {loading ? "Verifying..." : "Verify & Release Payment"}
             </button>
-
-            {/* Divider */}
-            <div className="divider-section">
-              <span className="divider-text">Or scan QR Code</span>
-            </div>
-
-            {/* Simple Scan Button (No library) */}
-            <button className="btn-scan-qr" onClick={handleScanClick}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <rect x="4" y="4" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="2"/>
-                <rect x="14" y="4" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="2"/>
-                <rect x="4" y="14" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="2"/>
-                <rect x="14" y="14" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="2"/>
-              </svg>
-              Scan Seller's QR Code
-            </button>
+            
 
             {/* Important Notice */}
             <div className="important-notice">

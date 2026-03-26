@@ -18,6 +18,7 @@ import AIInsights from "./pages/AiInsights";
 import Settings from "./pages/Settings";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import VerifyOtp from "./pages/VerifyOtp";
+import PaymentGateway from "./pages/PaymentGateway";
 
 
 function App() {
@@ -43,6 +44,7 @@ function App() {
         <Route path="/settings" element={<Settings />} />
         <Route path="/payment-success" element={<PaymentSuccess />} />
         <Route path="/verify-otp" element={<VerifyOtp />} />
+        <Route path="/payment-gateway" element={<PaymentGateway />} />
       </Routes>
     </Router>
   );

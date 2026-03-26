@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { redirect, useNavigate } from "react-router-dom";
 import logoBlue from "../assets/logo-blue.png";
 import "../styles/transaction.css";
 import { apiCall } from "../api";
@@ -87,7 +87,7 @@ const CreateTransaction = () => {
   const handleConfirmTransaction = async () => {
     setIsSubmitting(true);
     try {
-      // 1. Prepare Transaction Payload
+      // 1. Create the Transaction
       const payload = {
         item: formData.item,
         description: formData.description || "Escrow Transaction",
@@ -99,66 +99,58 @@ const CreateTransaction = () => {
         setDeliveryDays: Number(formData.setDeliveryDays) || 2,
       };
 
-      // Attach YOUR ID
       if (formData.transactionType === 'sell') {
           payload.sellerId = userData.id; 
       } else {
           payload.buyerId = userData.id;
       }
 
-      console.log("Sending Payload:", payload);
-
-      // 2. Call Create Transaction API
       const txnRes = await apiCall("/api/transactions", "POST", payload);
-      
-      console.log("---- FULL TRANSACTION RESPONSE ----", txnRes);
-
-      // 3. Extract ID (Checking multiple possible locations)
-      const txnData = txnRes.data || txnRes.transaction || txnRes; // Handle nesting
+      const txnData = txnRes.data || txnRes.transaction || txnRes;
       const txnId = txnData.id || txnData._id || txnData.reference;
       
-      if (!txnId) {
-        // If still no ID, throw error with details
-        throw new Error("Transaction ID missing. Check console for response structure.");
-      }
-      
-      setCreatedTxnId(txnId);
-      console.log("Extracted Transaction ID:", txnId);
+      if (!txnId) throw new Error("Transaction ID missing from server response.");
 
-      // 3. Prepare Payment Payload (MATCHING EXACT BACKEND EXAMPLE)
+      // 2. Prepare Payment Payload (ALIGNED TO BACKEND SAMPLE)
+      // IMPORTANT: Multiply by 100 if your backend expects Kobo (e.g. 60000 for 600 Naira)
+      const payAmount = Number(formData.amount) * 100; 
+
       const paymentPayload = {
-        meta: {
-          amount: Number(formData.amount), // Amount in Naira (Backend handles Kobo conversion)
+        meta: { 
+          amount: payAmount, 
           email: userData.email
         },
-        // Use your deployed frontend URL here so Paystack redirects back to your site
-        redirect_url: `${window.location.origin}/payment-success?ref=${txnId}`, 
+        redirect_url: `${window.location.origin}/payment-success?ref=${txnId}`,
         payment_merchant: "Paystack",
         payment_title: formData.item,
         payment_for: "transaction"
       };
 
+      console.log("Final Payment Payload:", JSON.stringify(paymentPayload, null, 2));
+
+      // 3. Get the Link
       const payRes = await apiCall("/api/payment/get-link", "POST", paymentPayload);
-    
       
-      if (payRes.authorization_url) {
-        window.location.href = payRes.authorization_url;
-      } else if (payRes.data?.authorization_url) {
-        window.location.href = payRes.data.authorization_url;
+      // Handle different response structures for the URL
+      const paymentLink = payRes.authorization_url || payRes.data?.authorization_url || payRes.link;
+
+      if (paymentLink) {
+        window.location.href = paymentLink;
       } else {
-        // If no link (e.g. Seller flow), go to escrow
-        navigate("/payment-escrow", { state: { transactionId: txnId } });
+        console.error("No link found in response:", payRes);
+        navigate("/payment-escrow", { state: { transactionId: txnId, amount: formData.amount } });
       }
 
     } catch (err) {
-      console.error("Transaction Error:", err);
-      // Show specific backend error message if available
-      const msg = err.message || "Failed to process transaction";
-      alert(msg);
+      // LOG THE FULL ERROR TO SEE THE MISSING FIELD
+      console.error("FULL API ERROR:", err);
+      const msg = err.response?.data?.message || err.message || "Missing required fields";
+      alert(`Payment Error: ${msg}`);
     } finally {
       setIsSubmitting(false);
     }
   };
+
 
   return (
     <div className="transaction-page">

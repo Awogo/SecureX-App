@@ -4,15 +4,19 @@ import logoBlue from "../assets/logo-blue.png";
 import "../styles/transaction.css";
 import { apiCall } from "../api";
 
+
 const DeliveryCodeSeller = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userData, setUserData] = useState(null);
-  
+  const [loading, setLoading] = useState(true);
+  const [isDelivering, setIsDelivering] = useState(false);
+
   const transactionId = location.state?.transactionId;
   // Static code for demo (In real app, fetch this from API)
-  const [deliveryCode, setDeliveryCode] = useState("62481"); 
+  const [deliveryCode, setDeliveryCode] = useState(null); 
+  const [transactionStatus, setTransactionStatus] = useState("pending");
 
   const getInitials = (user) => {
     if (!user) return "??";
@@ -22,7 +26,7 @@ const DeliveryCodeSeller = () => {
   };
 
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchData= async () => {
       try {
         const profileData = await apiCall("/api/users/profile", "GET");
         const rawUser = profileData.data || profileData.user || profileData;
@@ -34,25 +38,39 @@ const DeliveryCodeSeller = () => {
             lastName = parts.slice(1).join(" ");
         }
         setUserData({ firstName, lastName, email: rawUser.email });
-      } catch (err) { console.error("Not logged in"); }
+      } catch (err) {
+        console.error("Failed to fetch user data:", err);
+      }
     };
-    fetchUser();
-  }, []);
+    
+    if (transactionId) fetchData();
+  }, [transactionId]);
 
-    const handleMarkDelivered = async () => {
+  // --- FIX: GENERATE OTP BY MARKING AS DELIVERED ---
+  const handleMarkDelivered = async () => {
     if(!transactionId) return;
-    setLoading(true);
+    setIsDelivering(true);
     try {
-        // API CALL: Mark as Delivered
-        await apiCall(`/api/transactions/${transactionId}/deliver`, "PATCH");
-        alert("Transaction marked as delivered!");
+        // Call API to mark delivered
+        const res = await apiCall(`/api/transactions/${transactionId}/deliver`, "PATCH");
+        
+        // Backend should return the OTP in the response
+        const code = res.otp || res.deliveryOtp || res.data?.otp || res.data?.deliveryOtp;
+        
+        if (code) {
+            setDeliveryCode(code.toString());
+            setTransactionStatus('delivered');
+            alert("Delivery marked! Here is your code.");
+        } else {
+            alert("Delivery marked successfully! Check your email for the code.");
+            setTransactionStatus('delivered');
+        }
     } catch (err) {
-        alert(err.message);
+        alert(err.message || "Failed to update status");
     } finally {
-        setLoading(false);
+        setIsDelivering(false);
     }
-};
-
+  };
 return (
     <div className="transaction-page">
       {/* Sidebar */}
@@ -78,9 +96,9 @@ return (
             <span>AI Insights</span>
           </button>
           <button onClick={() => navigate("/verification")}>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2L4 5V9C4 12.5 7 16 10 17C13 16 9V5L10 2Z" stroke="currentColor" strokeWidth="1.5"/><path d="M7 10L9 12L13 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            <span>Verification</span>
-          </button>
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2L4 5V9C4 12.5 7 16 10 17C13 16 16 12.5 16 9V5L10 2Z" stroke="currentColor" strokeWidth="1.5"/><path d="M7 10L9 12L13 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        <span>Verification</span>
+        </button>
           <button onClick={() => navigate("/settings")}>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3" stroke="currentColor" strokeWidth="1.5"/><path d="M10 2V4M10 16V18M18 10H16M4 10H2M15.66 4.34L14.24 5.76M5.76 14.24L4.34 15.66M15.66 15.66L14.24 14.24M5.76 5.76L4.34 4.34" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
             <span>Settings</span>
@@ -146,63 +164,60 @@ return (
             </div>
 
             <h1 className="delivery-title">Delivery Confirmation Code</h1>
-            <p className="delivery-subtitle">Share this code with the buyer to confirm delivery and release payment</p>
+             {loading ? (
+                <p>Loading...</p>
+            ) : (
+                <>
+                    {/* CASE 1: OTP EXISTS (Show Code) */}
+                    {deliveryCode ? (
+                        <>
+                            <p className="delivery-subtitle">Share this code with the buyer to release payment.</p>
+                            <div className="code-display-section">
+                                <p className="code-label">Your Delivery Code</p>
+                                <div className="code-digits">
+                                    {deliveryCode.split('').map((digit, index) => (
+                                    <div key={index} className="code-digit">{digit}</div>
+                                    ))}
+                                </div>
+                            </div>
+                            
+                            <div className="how-works-box">
+                                <h3>Instructions</h3>
+                                <ol>
+                                    <li>You have marked this item as delivered.</li>
+                                    <li>Share the code above with the Buyer.</li>
+                                    <li>Once they enter it, funds are released.</li>
+                                </ol>
+                            </div>
+                        </>
+                    ) : (
+                        /* CASE 2: NO OTP YET (Show Button) */
+                        <>
+                            <p className="delivery-subtitle">
+                                Click the button below once you have handed over the item to the buyer.
+                            </p>
 
-            {/* Code Display */}
-            <div className="code-display-section">
-              <p className="code-label">Your 5 digit code</p>
-              <div className="code-digits">
-                {deliveryCode.split('').map((digit, index) => (
-                  <div key={index} className="code-digit">{digit}</div>
-                ))}
-              </div>
-              <p className="code-instruction">Share this code with the buyer to confirm delivery</p>
-            </div>
+                            <button 
+                                className="btn-verify" 
+                                onClick={handleMarkDelivered} 
+                                disabled={isDelivering}
+                                style={{ marginTop: '20px' }}
+                            >
+                                {isDelivering ? "Processing..." : "Mark as Delivered"}
+                            </button>
 
-            {/* Divider */}
-            <div className="divider-section"><span className="divider-text">Or share QR Code</span></div>
-
-      
-           {/* OTP Section */}
-<div className="otp-section">
-  <p className="otp-label">Enter OTP to confirm delivery</p>
-
-  <div className="otp-inputs">
-    {deliveryCode.split('').map((digit, index) => (
-      <input
-        key={index}
-        type="text"
-        maxLength="1"
-        className="otp-input"
-        value={digit}
-        readOnly
-      />
-    ))}
-  </div>
-
-  <p className="otp-note">
-    Buyer will enter this code to release payment
-  </p>
-</div>
-<button
-  className="btn-verify"
-  onClick={() => {
-    alert("✅ OTP Verified — Payment Released (Demo)");
-    navigate("/transactions");
-  }}
->
-  Confirm Delivery
-</button>
-            {/* How It Works */}
-            <div className="how-works-box">
-              <h3>How It Works</h3>
-              <ol>
-                <li>Deliver the product to the buyer</li>
-                <li>Share this code with them</li>
-                <li>They enter the code to confirm delivery</li>
-                <li>Payment is instantly released to your account</li>
-              </ol>
-            </div>
+                            <div className="how-works-box" style={{ marginTop: '30px' }}>
+                                <h3>What happens next?</h3>
+                                <ol>
+                                    <li>Click "Mark as Delivered".</li>
+                                    <li>We will generate a secure code for you.</li>
+                                    <li>Share that code with the buyer.</li>
+                                </ol>
+                            </div>
+                        </>
+                    )}
+                </>
+            )}
           </div>
         </div>
       </main>

@@ -239,29 +239,30 @@ const Verification = () => {
           <button className="close-sidebar-btn" onClick={() => setSidebarOpen(false)}>✕</button>
         </div>
 
-        <nav className="sidebar-nav">
-          <button className={`nav-item ${activeNav === "dashboard" ? "active" : ""}`} onClick={() => { setActiveNav("dashboard"); navigate("/dashboard"); }}>
+       <nav className="sidebar-nav">
+            {/* Nav Buttons with SVGs */}
+          <button onClick={() => navigate("/dashboard")}>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/><rect x="11" y="3" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/><rect x="3" y="11" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/><rect x="11" y="11" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/></svg>
             <span>Dashboard</span>
           </button>
-          <button className={`nav-item ${activeNav === "transactions" ? "active" : ""}`} onClick={() => { setActiveNav("transactions"); navigate("/transactions"); }}>
+          <button onClick={() => navigate("/transactions")}>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 5H17M3 10H17M3 15H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
             <span>Transactions</span>
           </button>
-          <button className={`nav-item ${activeNav === "ai" ? "active" : ""}`} onClick={() => { setActiveNav("ai"); navigate("/ai-insights"); }}>
+          
+          <button onClick={() => navigate("/ai-insights")}>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="1.5"/><path d="M10 6V10L13 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
             <span>AI Insights</span>
           </button>
-          <button className={`nav-item ${activeNav === "verification" ? "active" : ""}`} onClick={() => setActiveNav("verification")}>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2L4 5V9C4 12.5 7 16 10 17C13 16 16 12.5 16 9V5L10 2Z" stroke="currentColor" strokeWidth="1.5"/><path d="M7 10L9 12L13 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            <span>Verification</span>
-          </button>
-          <button className={`nav-item ${activeNav === "settings" ? "active" : ""}`} onClick={() => { setActiveNav("settings"); navigate("/settings"); }}>
+          <button onClick={() => navigate("/verification")}>
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2L4 5V9C4 12.5 7 16 10 17C13 16 16 12.5 16 9V5L10 2Z" stroke="currentColor" strokeWidth="1.5"/><path d="M7 10L9 12L13 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        <span>Verification</span>
+        </button>
+          <button onClick={() => navigate("/settings")}>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3" stroke="currentColor" strokeWidth="1.5"/><path d="M10 2V4M10 16V18M18 10H16M4 10H2M15.66 4.34L14.24 5.76M5.76 14.24L4.34 15.66M15.66 15.66L14.24 14.24M5.76 5.76L4.34 4.34" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
             <span>Settings</span>
           </button>
         </nav>
-
         <div className="sidebar-footer">
           <div className="user-profile">
             <div className="user-avatar">{getInitials(userData)}</div>

@@ -84,72 +84,72 @@ const CreateTransaction = () => {
 
   // --- FINAL SUBMISSION LOGIC ---
    // --- FINAL SUBMISSION LOGIC (FIXED) ---
-  const handleConfirmTransaction = async () => {
-    setIsSubmitting(true);
-    try {
-      // 1. Create the Transaction
-      const payload = {
-        item: formData.item,
-        description: formData.description || "Escrow Transaction",
-        amount: Number(formData.amount),
-        currency: "NGN", 
-        transactionType: formData.transactionType,
-        otherPartyEmail: formData.otherPartyEmail,
-        otherPartyPhone: formData.otherPartyPhone || "",
-        setDeliveryDays: Number(formData.setDeliveryDays) || 2,
-      };
+ const handleConfirmTransaction = async () => {
+  setIsSubmitting(true);
+  try {
+    // 1. Create the Transaction
+    const payload = {
+      item: formData.item,
+      description: formData.description || "Escrow Transaction",
+      amount: Number(formData.amount),
+      currency: "NGN", 
+      transactionType: formData.transactionType,
+      otherPartyEmail: formData.otherPartyEmail,
+      otherPartyPhone: formData.otherPartyPhone || "",
+      setDeliveryDays: Number(formData.setDeliveryDays) || 2,
+    };
 
-      if (formData.transactionType === 'sell') {
-          payload.sellerId = userData.id; 
-      } else {
-          payload.buyerId = userData.id;
-      }
-
-      const txnRes = await apiCall("/api/transactions", "POST", payload);
-      const txnData = txnRes.data || txnRes.transaction || txnRes;
-      const txnId = txnData.id || txnData._id || txnData.reference;
-      
-      if (!txnId) throw new Error("Transaction ID missing from server response.");
-
-      // 2. Prepare Payment Payload (ALIGNED TO BACKEND SAMPLE)
-      // IMPORTANT: Multiply by 100 if your backend expects Kobo (e.g. 60000 for 600 Naira)
-      const payAmount = Number(formData.amount) * 100; 
-
-      const paymentPayload = {
-        meta: { 
-          amount: payAmount, 
-          email: userData.email
-        },
-        redirect_url: `${window.location.origin}/payment-success?ref=${txnId}`,
-        payment_merchant: "Paystack",
-        payment_title: formData.item,
-        payment_for: "transaction"
-      };
-
-      console.log("Final Payment Payload:", JSON.stringify(paymentPayload, null, 2));
-
-      // 3. Get the Link
-      const payRes = await apiCall("/api/payment/get-link", "POST", paymentPayload);
-      
-      // Handle different response structures for the URL
-      const paymentLink = payRes.authorization_url || payRes.data?.authorization_url || payRes.link;
-
-      if (paymentLink) {
-        window.location.href = paymentLink;
-      } else {
-        console.error("No link found in response:", payRes);
-        navigate("/payment-escrow", { state: { transactionId: txnId, amount: formData.amount } });
-      }
-
-    } catch (err) {
-      // LOG THE FULL ERROR TO SEE THE MISSING FIELD
-      console.error("FULL API ERROR:", err);
-      const msg = err.response?.data?.message || err.message || "Missing required fields";
-      alert(`Payment Error: ${msg}`);
-    } finally {
-      setIsSubmitting(false);
+    if (formData.transactionType === 'sell') {
+        payload.sellerId = userData.id; 
+    } else {
+        payload.buyerId = userData.id;
     }
-  };
+
+    const txnRes = await apiCall("/api/transactions", "POST", payload);
+    const txnData = txnRes.data || txnRes.transaction || txnRes;
+    const txnId = txnData.id || txnData._id || txnData.reference;
+    
+    if (!txnId) throw new Error("Transaction ID missing from server response.");
+
+    if (formData.transactionType === "sell") {
+      alert("Transaction created! Waiting for buyer to pay.");
+      navigate("/transactions"); 
+      return;
+    }
+
+    // 3. Prepare Payment Payload for BUYER
+    const paymentPayload = {
+      meta: { 
+        amount: Number(formData.amount) * 100, // Backend sample 60000 = 600 Naira
+        email: userData.email
+      },
+      redirect_url: `${window.location.origin}/payment-success?ref=${txnId}`,
+      payment_merchant: "Paystack",
+      payment_title: formData.item,
+      payment_for: "transaction"
+    };
+
+    const payRes = await apiCall("/api/payment/get-link", "POST", paymentPayload);
+    
+    // --- THE CRITICAL FIX: Find the correct link property ---
+    console.log("Paystack Response:", payRes);
+    const paymentLink = payRes.paymentLink || payRes.data?.paymentLink;
+
+    if (paymentLink) {
+       console.log("Redirecting to Paystack:", paymentLink);
+      window.location.href = paymentLink; 
+    } else {
+      console.error("Could not find payment link in response. Response was:", payRes);
+  navigate("/payment-escrow", { state: { transactionId: txnId, amount: formData.amount } })
+    }
+
+  } catch (err) {
+    console.error("Transaction Error:", err);
+    alert(err.message || "Failed to process transaction");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
 
   return (

@@ -84,76 +84,86 @@ const CreateTransaction = () => {
 
   // --- FINAL SUBMISSION LOGIC ---
    // --- FINAL SUBMISSION LOGIC (FIXED) ---
- const handleConfirmTransaction = async () => {
-  setIsSubmitting(true);
-  try {
-    // 1. Create the Transaction
-    const payload = {
-      item: formData.item,
-      description: formData.description || "Escrow Transaction",
-      amount: Number(formData.amount),
-      currency: "NGN", 
-      transactionType: formData.transactionType,
-      otherPartyEmail: formData.otherPartyEmail,
-      otherPartyPhone: formData.otherPartyPhone || "",
-      setDeliveryDays: Number(formData.setDeliveryDays) || 2,
-    };
+  // --- FINAL SUBMISSION LOGIC (WITH FALLBACK) ---
+  const handleConfirmTransaction = async () => {
+    setIsSubmitting(true);
+    try {
+      // 1. Prepare Payload
+      const payload = {
+        item: formData.item,
+        description: formData.description || "Escrow Transaction",
+        amount: Number(formData.amount),
+        currency: "NGN", 
+        transactionType: formData.transactionType,
+        otherPartyEmail: formData.otherPartyEmail,
+        otherPartyPhone: formData.otherPartyPhone || "",
+        setDeliveryDays: Number(formData.setDeliveryDays) || 2,
+      };
 
-    if (formData.transactionType === 'sell') {
-        payload.sellerId = userData.id; 
-    } else {
-        payload.buyerId = userData.id;
+      // Attach Creator ID
+      if (formData.transactionType === 'sell') {
+          payload.sellerId = userData.id; 
+      } else {
+          payload.buyerId = userData.id;
+      }
+
+      console.log("Creating Transaction:", payload);
+
+      // 2. Call Create Transaction API
+      const txnRes = await apiCall("/api/transactions", "POST", payload);
+      
+      const txnData = txnRes.data || txnRes.transaction || txnRes;
+      const txnId = txnData.id || txnData._id || txnData.reference;
+      
+      if (!txnId) throw new Error("Transaction ID missing.");
+      setCreatedTxnId(txnId);
+
+      // 3. Handle Payment Link (Only for Buyers)
+      if (formData.transactionType === 'buy') {
+        try {
+            const paymentPayload = {
+              meta: { amount: Number(formData.amount) * 100, email: userData.email },
+              redirect_url: `${window.location.origin}/payment-success?ref=${txnId}`,
+              payment_merchant: "Paystack",
+              payment_title: formData.item,
+              payment_for: "transaction"
+            };
+
+            const payRes = await apiCall("/api/payment/get-link", "POST", paymentPayload);
+            
+            // Check multiple possible response structures
+            const paymentLink = 
+              payRes?.paymentLink || 
+              payRes?.data?.paymentLink || 
+              payRes?.authorization_url || 
+              payRes?.data?.authorization_url;
+
+            if (paymentLink) {
+              console.log("Redirecting to Paystack:", paymentLink);
+              window.location.href = paymentLink;
+            } else {
+              // FALLBACK: No link found, go to Escrow Page
+              console.warn("No payment link returned. Redirecting to escrow page.");
+              navigate("/payment-escrow", { state: { transactionId: txnId, amount: formData.amount } });
+            }
+        } catch (payErr) {
+            // FALLBACK: Payment API failed, but transaction was created. Go to Escrow Page.
+            console.error("Payment link error. Falling back to escrow page:", payErr);
+            navigate("/payment-escrow", { state: { transactionId: txnId, amount: formData.amount } });
+        }
+      } else {
+          // Seller flow: just go to the success step
+          handleNext();
+      }
+
+    } catch (err) {
+      // Transaction creation failed
+      console.error("Transaction Error:", err);
+      alert(err.message || "Failed to create transaction");
+    } finally {
+      setIsSubmitting(false);
     }
-
-    const txnRes = await apiCall("/api/transactions", "POST", payload);
-    const txnData = txnRes.data || txnRes.transaction || txnRes;
-    const txnId = txnData.id || txnData._id || txnData.reference;
-    
-    if (!txnId) throw new Error("Transaction ID missing from server response.");
-
-    if (formData.transactionType === "sell") {
-      alert("Transaction created! Waiting for buyer to pay.");
-      navigate("/transactions"); 
-      return;
-    }
-
-    // 3. Prepare Payment Payload for BUYER
-    const paymentPayload = {
-      meta: { 
-        amount: Number(formData.amount) * 100, // Backend sample 60000 = 600 Naira
-        email: userData.email
-      },
-      redirect_url: `${window.location.origin}/payment-success?ref=${txnId}`,
-      payment_merchant: "Paystack",
-      payment_title: formData.item,
-      payment_for: "transaction"
-    };
-
-    const payRes = await apiCall("/api/payment/get-link", "POST", paymentPayload);
-    
-    // --- THE CRITICAL FIX: Find the correct link property ---
-    console.log("Paystack Response:", payRes);
-const paymentLink =
-  payRes?.paymentLink ||
-  payRes?.data?.paymentLink ||
-  payRes?.data?.authorization_url;
-
-   if (!paymentLink) {
-  console.error("FULL Paystack response:", payRes);
-  throw new Error("Payment link not returned from backend");
-}
-
-window.location.href = paymentLink;
-
-  } catch (err) {
-  console.error("Transaction Error:", err);
-
-  if (err.message.includes("Failed to fetch")) {
-    alert("Network error. Please check your internet connection.");
-  } else {
-    alert(err.message || "Failed to process transaction");
-  }}
-};
+  };
 
 
   return (

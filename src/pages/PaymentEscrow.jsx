@@ -6,11 +6,12 @@ import { apiCall } from "../api";
 
 const PaymentEscrow = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userData, setUserData] = useState(null);
   const [transaction, setTransaction] = useState(null);
+// Inside PaymentEscrow.jsx component
 
+const location = useLocation();
   // Get ID from navigation state
   const transactionId = location.state?.transactionId;
 
@@ -119,6 +120,7 @@ const PaymentEscrow = () => {
                   <span className="detail-label">Status</span>
                   <span className="status-badge status-warning">{transaction?.status || "Awaiting Delivery"}</span>
                 </div>
+                
               </div>
             </div>
 

@@ -85,6 +85,7 @@ const CreateTransaction = () => {
   // --- FINAL SUBMISSION LOGIC ---
    // --- FINAL SUBMISSION LOGIC (FIXED) ---
   // --- FINAL SUBMISSION LOGIC (WITH FALLBACK) ---
+  // --- FINAL SUBMISSION LOGIC (DIRECT TO ESCROW) ---
   const handleConfirmTransaction = async () => {
     setIsSubmitting(true);
     try {
@@ -118,46 +119,18 @@ const CreateTransaction = () => {
       if (!txnId) throw new Error("Transaction ID missing.");
       setCreatedTxnId(txnId);
 
-      // 3. Handle Payment Link (Only for Buyers)
-      if (formData.transactionType === 'buy') {
-        try {
-            const paymentPayload = {
-              meta: { amount: Number(formData.amount) * 100, email: userData.email },
-              redirect_url: `${window.location.origin}/payment-success?ref=${txnId}`,
-              payment_merchant: "Paystack",
-              payment_title: formData.item,
-              payment_for: "transaction"
-            };
-
-            const payRes = await apiCall("/api/payment/get-link", "POST", paymentPayload);
-            
-            // Check multiple possible response structures
-            const paymentLink = 
-              payRes?.paymentLink || 
-              payRes?.data?.paymentLink || 
-              payRes?.authorization_url || 
-              payRes?.data?.authorization_url;
-
-            if (paymentLink) {
-              console.log("Redirecting to Paystack:", paymentLink);
-              window.location.href = paymentLink;
-            } else {
-              // FALLBACK: No link found, go to Escrow Page
-              console.warn("No payment link returned. Redirecting to escrow page.");
-              navigate("/payment-escrow", { state: { transactionId: txnId, amount: formData.amount } });
-            }
-        } catch (payErr) {
-            // FALLBACK: Payment API failed, but transaction was created. Go to Escrow Page.
-            console.error("Payment link error. Falling back to escrow page:", payErr);
-            navigate("/payment-escrow", { state: { transactionId: txnId, amount: formData.amount } });
-        }
-      } else {
-          // Seller flow: just go to the success step
-          handleNext();
-      }
+      // 3. SUCCESS: Navigate directly to Payment Success
+      // We pass the details so the next pages can display them
+      navigate("/payment-success", { 
+        state: { 
+          transactionId: txnId,
+          amount: formData.amount,
+          item: formData.item,
+          buyerEmail: formData.otherPartyEmail
+        } 
+      });
 
     } catch (err) {
-      // Transaction creation failed
       console.error("Transaction Error:", err);
       alert(err.message || "Failed to create transaction");
     } finally {

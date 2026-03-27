@@ -1,36 +1,46 @@
 import { useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import logoIcon from "../assets/logo-icon.png";
 import "../styles/auth.css";
 
 const PaymentSuccess = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    // 1. Try to get ID from URL (standard flow)
+    // 1. Try to get ID from URL (Paystack callback)
     let ref = searchParams.get("ref") || searchParams.get("reference");
-    
-    // 2. If no ID in URL, try Local Storage (fallback)
-    if (!ref) {
-      ref = localStorage.getItem("lastTransactionId");
+    let amount = null;
+    let item = null;
+
+    // 2. If no URL ID, try to get from Navigation State (Direct from CreateTransaction)
+    if (!ref && location.state?.transactionId) {
+      ref = location.state.transactionId;
+      amount = location.state.amount;
+      item = location.state.item;
     }
 
-    console.log("Payment Success Ref:", ref);
+    console.log("Transaction ID:", ref);
 
     const timer = setTimeout(() => {
       if (ref) {
-        // Navigate to Escrow Page
-        navigate("/payment-escrow", { state: { transactionId: ref } });
+        // Navigate to Escrow, passing all details forward
+        navigate("/payment-escrow", { 
+          state: { 
+            transactionId: ref,
+            amount: amount,
+            item: item
+          } 
+        });
       } else {
-        // Absolute fallback
-        console.error("No Transaction ID found. Going to dashboard.");
+        console.error("No Transaction ID found");
         navigate("/dashboard");
       }
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [navigate, searchParams]);
+  }, [navigate, searchParams, location.state]);
 
   return (
     <div className="auth-page payment-success-page">
@@ -45,7 +55,7 @@ const PaymentSuccess = () => {
           </div>
         </div>
         
-        <h1 className="auth-heading">Payment Successful</h1>
+        <h1 className="auth-heading">Success!</h1>
         <p className="auth-subtitle">
           Redirecting to your transaction details...
         </p>

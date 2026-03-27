@@ -10,12 +10,20 @@ body {
 /* Auth Page Layout */
 .auth-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #F6F7FB 0%, #E8EAF6 100%);
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
   padding: 40px 20px;
+  background: #F6F7FB;
   font-family: 'Inter', sans-serif;
+  box-sizing: border-box;
+}
+
+.auth-page *,
+.auth-page *::before,
+.auth-page *::after {
+  box-sizing: border-box;
 }
 
 .auth-card {

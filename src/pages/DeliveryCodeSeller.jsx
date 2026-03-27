@@ -26,7 +26,7 @@ const DeliveryCodeSeller = () => {
   };
 
   useEffect(() => {
-    const fetchData= async () => {
+    const fetchData = async () => {
       try {
         const profileData = await apiCall("/api/users/profile", "GET");
         const rawUser = profileData.data || profileData.user || profileData;
@@ -38,12 +38,26 @@ const DeliveryCodeSeller = () => {
             lastName = parts.slice(1).join(" ");
         }
         setUserData({ firstName, lastName, email: rawUser.email });
-      } catch (err) {
-        console.error("Failed to fetch user data:", err);
+
+        if (transactionId) {
+          const txnRes = await apiCall(`/api/transactions/${transactionId}`, "GET");
+          const txn = txnRes.data || txnRes;
+          
+          // Check if already delivered and has code
+          const existingCode = txn.otp || txn.deliveryOtp || txn.deliveryCode;
+          const status = txn.status?.toLowerCase();
+
+          if (existingCode) setDeliveryCode(existingCode.toString());
+          if (status === 'delivered') setTransactionStatus('delivered');
+        }
+      } catch (err) { 
+        console.error("Error fetching data:", err); 
+      } finally {
+        setLoading(false);
       }
     };
     
-    if (transactionId) fetchData();
+    fetchData();
   }, [transactionId]);
 
   // --- FIX: GENERATE OTP BY MARKING AS DELIVERED ---

@@ -133,22 +133,26 @@ const CreateTransaction = () => {
     
     // --- THE CRITICAL FIX: Find the correct link property ---
     console.log("Paystack Response:", payRes);
-    const paymentLink = payRes.paymentLink || payRes.data?.paymentLink;
+const paymentLink =
+  payRes?.paymentLink ||
+  payRes?.data?.paymentLink ||
+  payRes?.data?.authorization_url;
 
-    if (paymentLink) {
-       console.log("Redirecting to Paystack:", paymentLink);
-      window.location.href = paymentLink; 
-    } else {
-      console.error("Could not find payment link in response. Response was:", payRes);
-  navigate("/payment-escrow", { state: { transactionId: txnId, amount: formData.amount } })
-    }
+   if (!paymentLink) {
+  console.error("FULL Paystack response:", payRes);
+  throw new Error("Payment link not returned from backend");
+}
+
+window.location.href = paymentLink;
 
   } catch (err) {
-    console.error("Transaction Error:", err);
+  console.error("Transaction Error:", err);
+
+  if (err.message.includes("Failed to fetch")) {
+    alert("Network error. Please check your internet connection.");
+  } else {
     alert(err.message || "Failed to process transaction");
-  } finally {
-    setIsSubmitting(false);
-  }
+  }}
 };
 
 

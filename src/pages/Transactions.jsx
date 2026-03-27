@@ -9,8 +9,6 @@ const Transactions = () => {
   const [activeNav, setActiveNav] = useState("transactions");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
-  
-  // State for Data
   const [userData, setUserData] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -47,7 +45,9 @@ const Transactions = () => {
 
         // 2. Fetch Transactions
         const txnRes = await apiCall("/api/transactions", "GET");
-        setTransactions(txnRes.data || txnRes || []);
+          const txnData = txnRes.data || txnRes.transactions || txnRes;
+        setTransactions(Array.isArray(txnData) ? txnData : []);
+
 
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -58,20 +58,27 @@ const Transactions = () => {
     fetchData();
   }, []);
 
+  
   const getStatusBadge = (status) => {
+    const s = (status || "pending").toLowerCase();
     const badges = {
       completed: { text: "Completed", class: "status-completed" },
-      pending: { text: "Pending", class: "status-pending" },
+      delivered: { text: "Delivered", class: "status-progress" },
       "in-progress": { text: "In Progress", class: "status-progress" },
-      cancelled: { text: "Cancelled", class: "status-cancelled" },
-      delivered: { text: "Delivered", class: "status-progress" } // Added for API consistency
+      in_progress: { text: "In Progress", class: "status-progress" },
+      pending: { text: "Pending", class: "status-pending" },
+      cancelled: { text: "Cancelled", class: "status-cancelled" }
     };
-    return badges[status?.toLowerCase()] || badges.pending;
+    return badges[s] || badges.pending;
   };
 
-  const filteredTransactions = transactions.filter(txn => {
+   const filteredTransactions = transactions.filter(txn => {
+    const status = (txn.status || "").toLowerCase();
     if (activeTab === "all") return true;
-    return txn.status?.toLowerCase() === activeTab;
+    if (activeTab === "completed") return status === "completed";
+    if (activeTab === "pending") return status === "pending" || status === "awaiting_payment";
+    if (activeTab === "in-progress") return status === "in_progress" || status === "in-progress" || status === "delivered";
+    return true;
   });
 
   return (
@@ -129,10 +136,12 @@ const Transactions = () => {
           <button className="mobile-menu-btn" onClick={() => setSidebarOpen(true)}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 6H21M3 12H21M3 18H21" stroke="#1E1E1E" strokeWidth="2" strokeLinecap="round"/></svg>
           </button>
+
           <div className="search-bar">
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="8" cy="8" r="5.25" stroke="#7A7A7A" strokeWidth="1.5"/><path d="M12 12L15.5 15.5" stroke="#7A7A7A" strokeWidth="1.5" strokeLinecap="round"/></svg>
             <input type="text" placeholder="Search transactions..." />
           </div>
+
           <div className="header-actions">
             <button className="icon-btn">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 4C10 4 6 7 6 10C6 12 7.34315 13 9 13H11C12.6569 13 14 12 14 10C14 7 10 4 10 4Z" stroke="#1E1E1E" strokeWidth="1.5"/><path d="M9 16H11" stroke="#1E1E1E" strokeWidth="1.5" strokeLinecap="round"/></svg>
@@ -140,6 +149,7 @@ const Transactions = () => {
             </button>
             <button className="user-btn">
               <div className="user-avatar-small">{getInitials(userData)}</div>
+              <span className="notification-badge">2</span>
             </button>
           </div>
         </header>

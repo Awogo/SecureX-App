@@ -42,8 +42,10 @@ const TransactionDetails = () => {
 
         // 2. Transaction Details
         // Assuming backend can search by ID or Reference
-        const txnRes = await apiCall(`/api/transactions/${id}`, "GET");
-        setTransaction(txnRes.data || txnRes);
+       if (id) {
+            const txnRes = await apiCall(`/api/transactions/${id}`, "GET");
+            setTransaction(txnRes.data || txnRes);
+        }
 
       } catch (error) {
         console.error("Error fetching details:", error);

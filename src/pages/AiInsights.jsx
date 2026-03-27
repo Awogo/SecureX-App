@@ -1,95 +1,97 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import logoBlue from "../assets/logo-blue.png";
-import "../styles/aiinsights.css";
+import "../styles/ai-insights.css"; // We will create this CSS
 import { apiCall } from "../api";
 
 const AIInsights = () => {
   const navigate = useNavigate();
-  const [activeNav, setActiveNav] = useState("ai");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  // --- STATE ---
   const [userData, setUserData] = useState(null);
-  const [insightsData, setInsightsData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  
+  // Chat State
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const messagesEndRef = useRef(null);
 
-  // --- HELPER: INITIALS ---
-  const getInitials = (user) => {
-    if (!user) return "??";
-    const first = user.firstName?.[0] || "";
-    const last = user.lastName?.[0] || "";
-    if (first || last) return (first + last).toUpperCase();
-    if (user.name) {
-      const parts = user.name.split(" ");
-      return (parts[0][0] + (parts[1] ? parts[1][0] : "")).toUpperCase();
-    }
-    return user.email?.[0]?.toUpperCase() || "U";
-  };
-
-  // --- DATA FETCHING ---
+  // Fetch User
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchUser = async () => {
       try {
-        // 1. Fetch User Profile
-        const profileData = await apiCall("/api/users/profile", "GET");
-        const rawUser = profileData.data || profileData.user || profileData;
+        const res = await apiCall("/api/users/profile", "GET");
+        const user = res.data || res.user || res;
+        setUserData(user);
         
-        let firstName = rawUser.firstName;
-        let lastName = rawUser.lastName;
-        if (!firstName && rawUser.name) {
-          const parts = rawUser.name.split(" ");
-          firstName = parts[0];
-          lastName = parts.slice(1).join(" ");
-        }
-
-        setUserData({
-          id: rawUser.id || rawUser._id,
-          firstName: firstName || "User",
-          lastName: lastName || "",
-          email: rawUser.email,
-        });
-
-        // 2. Fetch AI Insights
-        // NOTE: Replace '/api/ai/insights' with your actual endpoint if different
-        try {
-          const insightsRes = await apiCall("/api/ai/insights", "GET");
-          setInsightsData(insightsRes.data || insightsRes);
-        } catch (err) {
-          console.log("AI Insights endpoint not ready, using mock data.");
-          // Mock data fallback to match the image
-          setInsightsData({
-            alerts: [
-              { type: "success", title: "Trust Score Improved", value: "+5%", desc: "Based on recent transactions" },
-              { type: "info", title: "3 New High-Value Buyers", value: "Detected", desc: "In the last 24 hours" },
-              { type: "warning", title: "Zero Fraud Detection", value: "0 Issues", desc: "System secure" }
-            ],
-            topBuyers: [
-              { name: "Emeka Okafor", trust: 98, transactions: 45, total: "₦2.5M" },
-              { name: "Sarah Johnson", trust: 95, transactions: 32, total: "₦1.8M" },
-              { name: "Chinedu Eze", trust: 92, transactions: 28, total: "₦1.2M" }
-            ],
-            recommendations: [
-              "Increase your transaction limit to capture more high-value buyers.",
-              "Verify your business account to improve trust score by 10%.",
-              "Enable 2FA for enhanced security on large transactions."
-            ]
-          });
-        }
-
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setLoading(false);
+        // Initial Bot Message
+        setMessages([{
+          type: 'bot',
+          text: `Hello ${user.firstName || 'there'}! 👋 I'm your SecureX AI Assistant. I can help you with transactions, trust scores, and security tips. How can I assist you today?`
+        }]);
+      } catch (err) {
+        console.error(err);
+        setUserData({ firstName: "Guest" });
       }
     };
-
-    fetchData();
+    fetchUser();
   }, []);
+
+  // Auto scroll to bottom
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const getInitials = (user) => {
+    if (!user) return "??";
+    return ((user.firstName?.[0] || "") + (user.lastName?.[0] || "")).toUpperCase() || "U";
+  };
+
+  // Send Message
+  const handleSend = async (text = input) => {
+    if (!text.trim()) return;
+
+    const userMessage = { type: 'user', text: text };
+    setMessages(prev => [...prev, userMessage]);
+    setInput("");
+    setIsTyping(true);
+
+    try {
+      // Call Chatbot API
+      const res = await apiCall("/api/chatbot", "POST", { message: text });
+      
+      const botMessage = { 
+        type: 'bot', 
+        text: res.reply || "I'm sorry, I didn't understand that." 
+      };
+      setMessages(prev => [...prev, botMessage]);
+    } catch (err) {
+      setMessages(prev => [...prev, { 
+        type: 'bot', 
+        text: "I'm having trouble connecting right now. Please try again later." 
+      }]);
+    } finally {
+      setIsTyping(false);
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  // Quick Action Buttons
+  const quickActions = [
+    { label: "Start a Transaction", icon: "📝", action: () => navigate("/create-transaction") },
+    { label: "Check Trust Score", icon: "🛡️", action: () => handleSend("What is my trust score?") },
+    { label: "Security Tips", icon: "💡", action: () => handleSend("Give me security tips") },
+    { label: "Dispute Help", icon: "⚖️", action: () => handleSend("How do I resolve a dispute?") }
+  ];
 
   return (
     <div className="ai-page">
-      {/* SIDEBAR */}
+      {/* Sidebar */}
       <aside className={`ai-sidebar ${sidebarOpen ? "open" : ""}`}>
         <div className="sidebar-header">
           <img src={logoBlue} alt="SecureX" className="sidebar-logo" />
@@ -97,24 +99,24 @@ const AIInsights = () => {
         </div>
 
         <nav className="sidebar-nav">
-          <button className={`nav-item ${activeNav === "dashboard" ? "active" : ""}`} onClick={() => navigate("/dashboard")}>
+          <button className="nav-item" onClick={() => navigate("/dashboard")}>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/><rect x="11" y="3" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/><rect x="3" y="11" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/><rect x="11" y="11" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/></svg>
             <span>Dashboard</span>
           </button>
-          <button className={`nav-item ${activeNav === "transactions" ? "active" : ""}`} onClick={() => navigate("/transactions")}>
+          <button className="nav-item" onClick={() => navigate("/transactions")}>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 5H17M3 10H17M3 15H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
             <span>Transactions</span>
           </button>
-          <button className={`nav-item ${activeNav === "ai" ? "active" : ""}`} onClick={() => setActiveNav("ai")}>
+          <button className="nav-item active">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="1.5"/><path d="M10 6V10L13 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
             <span>AI Insights</span>
           </button>
-          <button className={`nav-item ${activeNav === "verification" ? "active" : ""}`} onClick={() => navigate("/verification")}>
+          <button className="nav-item" onClick={() => navigate("/verification")}>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2L4 5V9C4 12.5 7 16 10 17C13 16 16 12.5 16 9V5L10 2Z" stroke="currentColor" strokeWidth="1.5"/><path d="M7 10L9 12L13 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
             <span>Verification</span>
           </button>
-          <button className={`nav-item ${activeNav === "settings" ? "active" : ""}`} onClick={() => navigate("/settings")}>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3" stroke="currentColor" strokeWidth="1.5"/><path d="M10 2V4M10 16V18M18 10H16M4 10H2M15.66 4.34L14.24 5.76M5.76 14.24L4.34 15.66M15.66 15.66L14.24 14.24M5.76 5.76L4.34 4.34" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+          <button className="nav-item" onClick={() => navigate("/settings")}>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3" stroke="currentColor" strokeWidth="1.5"/><path d="M10 2V4M10 16V18M18 10H16M4 10H2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
             <span>Settings</span>
           </button>
         </nav>
@@ -135,110 +137,94 @@ const AIInsights = () => {
       </aside>
       {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
 
-      {/* MAIN CONTENT */}
+      {/* Main Content */}
       <main className="ai-main">
         <header className="ai-header">
           <button className="mobile-menu-btn" onClick={() => setSidebarOpen(true)}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 6H21M3 12H21M3 18H21" stroke="#1E1E1E" strokeWidth="2" strokeLinecap="round"/></svg>
           </button>
-          <div className="search-bar">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="8" cy="8" r="5.25" stroke="#7A7A7A" strokeWidth="1.5"/><path d="M12 12L15.5 15.5" stroke="#7A7A7A" strokeWidth="1.5" strokeLinecap="round"/></svg>
-            <input type="text" placeholder="Search insights..." />
+          
+          <div className="header-title">
+            <div className="bot-avatar-header">
+               <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                 <circle cx="12" cy="12" r="10" stroke="#4A5CF5" strokeWidth="2"/>
+                 <path d="M8 14S9.5 16 12 16S16 14 16 14" stroke="#4A5CF5" strokeWidth="2" strokeLinecap="round"/>
+                 <circle cx="9" cy="10" r="1.5" fill="#4A5CF5"/>
+                 <circle cx="15" cy="10" r="1.5" fill="#4A5CF5"/>
+               </svg>
+            </div>
+            <div>
+              <h1>SecureX AI Assistant</h1>
+              <span className="status-badge">Online</span>
+            </div>
           </div>
+
           <div className="header-actions">
-            <button className="icon-btn">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 4C10 4 6 7 6 10C6 12 7.34315 13 9 13H11C12.6569 13 14 12 14 10C14 7 10 4 10 4Z" stroke="#1E1E1E" strokeWidth="1.5"/><path d="M9 16H11" stroke="#1E1E1E" strokeWidth="1.5" strokeLinecap="round"/></svg>
-              <span className="notification-badge">2</span>
-            </button>
-            <button className="user-btn">
-              <div className="user-avatar-small">{getInitials(userData)}</div>
-            </button>
+            <button className="user-btn"><div className="user-avatar-small">{getInitials(userData)}</div></button>
           </div>
         </header>
 
-        <div className="ai-content">
-          <div className="page-header">
-            <h1>AI Business Intelligence</h1>
-            <p className="page-subtitle">Leverage artificial intelligence to optimize your business</p>
+        {/* Chat Area */}
+        <div className="chat-container">
+          <div className="messages-area">
+            {messages.map((msg, index) => (
+              <div key={index} className={`message-row ${msg.type}`}>
+                {msg.type === 'bot' && (
+                  <div className="avatar-bot">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#4A5CF5" strokeWidth="2"/><path d="M8 14S9.5 16 12 16S16 14 16 14" stroke="#4A5CF5" strokeWidth="2" strokeLinecap="round"/></svg>
+                  </div>
+                )}
+                <div className={`message-bubble ${msg.type}`}>
+                  {msg.text}
+                </div>
+              </div>
+            ))}
+            
+            {isTyping && (
+              <div className="message-row bot">
+                <div className="avatar-bot"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#4A5CF5" strokeWidth="2"/></svg></div>
+                <div className="message-bubble bot typing">
+                  <span className="dot"></span><span className="dot"></span><span className="dot"></span>
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
           </div>
 
-          {loading ? <div className="loading-state">Loading Insights...</div> : (
-            <>
-              {/* ALERT CARDS */}
-              <div className="insights-alerts-grid">
-                {insightsData?.alerts?.map((alert, index) => (
-                  <div key={index} className={`alert-card ${alert.type}`}>
-                    <div className="alert-icon">
-                      {alert.type === 'success' && <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 5V11C4 16.55 8.84 21.74 12 23C15.16 21.74 20 16.55 20 11V5L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                      {alert.type === 'info' && <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 12V8M12 16H12.01M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                      {alert.type === 'warning' && <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="2"/><path d="M9 9L15 15M15 9L9 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>}
-                    </div>
-                    <div className="alert-content">
-                      <h3>{alert.title}</h3>
-                      <p>{alert.desc}</p>
-                    </div>
-                    <div className="alert-value">{alert.value}</div>
-                  </div>
+          {/* Quick Actions (Show if few messages) */}
+          {messages.length <= 1 && (
+            <div className="quick-actions-overlay">
+              <p>I can help you with:</p>
+              <div className="quick-action-grid">
+                {quickActions.map((action, i) => (
+                  <button key={i} className="quick-action-btn" onClick={action.action}>
+                    <span className="action-icon">{action.icon}</span>
+                    <span>{action.label}</span>
+                  </button>
                 ))}
               </div>
-
-              {/* CHARTS (Reusing Dashboard Visuals) */}
-              <div className="charts-row">
-                <div className="chart-card large">
-                  <h3>Transaction Trends</h3>
-                  <div className="chart-placeholder">
-                    <svg width="100%" height="200" viewBox="0 0 400 200">
-                      <polyline points="0,150 50,140 100,120 150,130 200,110 250,100 300,80 350,70 400,60" fill="none" stroke="#4A5CF5" strokeWidth="2"/>
-                      <polyline points="0,150 50,140 100,120 150,130 200,110 250,100 300,80 350,70 400,60 400,200 0,200" fill="url(#gradAI)" opacity="0.2"/>
-                      <defs><linearGradient id="gradAI" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stopColor="#4A5CF5" stopOpacity="0.3"/><stop offset="100%" stopColor="#4A5CF5" stopOpacity="0"/></linearGradient></defs>
-                    </svg>
-                  </div>
-                </div>
-
-                <div className="chart-card">
-                  <h3>Escrow Distribution</h3>
-                  <div className="pie-container">
-                    <svg width="160" height="160" viewBox="0 0 160 160">
-                      <circle cx="80" cy="80" r="60" fill="none" stroke="#4A5CF5" strokeWidth="30" strokeDasharray="188 502"/>
-                      <circle cx="80" cy="80" r="60" fill="none" stroke="#00D9A3" strokeWidth="30" strokeDasharray="140 502" strokeDashoffset="-188"/>
-                      <circle cx="80" cy="80" r="60" fill="none" stroke="#2C36A2" strokeWidth="30" strokeDasharray="94 502" strokeDashoffset="-328"/>
-                    </svg>
-                  </div>
-                </div>
-              </div>
-
-              {/* TOP BUYERS & RECOMMENDATIONS */}
-              <div className="bottom-section">
-                <div className="top-buyers-card">
-                  <h3>Top 3 Trusted Buyers</h3>
-                  <div className="buyers-list">
-                    {insightsData?.topBuyers?.map((buyer, index) => (
-                      <div key={index} className="buyer-row">
-                        <div className="buyer-info">
-                          <span className="buyer-name">{buyer.name}</span>
-                          <span className="buyer-stats">Trust: {buyer.trust}% • {buyer.transactions} Transactions</span>
-                        </div>
-                        <div className="buyer-total">{buyer.total}</div>
-                        <button className="connect-btn">Connect</button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="recommendations-card">
-                  <h3>AI Recommendations</h3>
-                  <ul className="rec-list">
-                    {insightsData?.recommendations?.map((rec, index) => (
-                      <li key={index}>
-                        <span className="rec-icon">💡</span>
-                        {rec}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </>
+            </div>
           )}
+        </div>
+
+        {/* Input Area */}
+        <div className="input-area">
+          <div className="input-container">
+            <textarea 
+              placeholder="Type your message..." 
+              value={input} 
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={handleKeyPress}
+              rows="1"
+            />
+            <button className="send-btn" onClick={() => handleSend()} disabled={!input.trim()}>
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M18 10L3 3L6 10L3 17L18 10Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M6 10H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+            </button>
+          </div>
+          <p className="input-hint">SecureX AI can make mistakes. Consider checking important information.</p>
         </div>
       </main>
     </div>

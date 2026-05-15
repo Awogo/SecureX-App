@@ -1,0 +1,158 @@
+/* payment.css */
+
+.payment-gateway-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #F6F7FB 0%, #EEF2FF 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  font-family: 'Inter', sans-serif;
+}
+
+.gateway-container {
+  width: 100%;
+  max-width: 450px;
+  background: white;
+  border-radius: 24px;
+  padding: 40px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  text-align: center;
+}
+
+.gateway-logo img {
+  height: 40px;
+  margin-bottom: 24px;
+}
+
+.gateway-container h1 {
+  font-size: 24px;
+  color: #1E1E1E;
+  margin-bottom: 8px;
+}
+
+.gateway-subtitle {
+  color: #7A7A7A;
+  margin-bottom: 32px;
+  font-size: 14px;
+}
+
+.gateway-summary {
+  background: #F6F7FB;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 32px;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: #555;
+}
+
+.summary-row.total {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #E5E7EB;
+  font-size: 18px;
+  color: #000;
+  font-weight: 700;
+}
+
+.payment-methods {
+  text-align: left;
+  margin-bottom: 32px;
+}
+
+.payment-methods h3 {
+  font-size: 14px;
+  color: #7A7A7A;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.method-card {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  border: 2px solid #E5E7EB;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.method-card:hover {
+  border-color: #4A5CF5;
+}
+
+.method-card.selected {
+  border-color: #4A5CF5;
+  background: #EEF2FF;
+}
+
+.method-icon {
+  font-size: 24px;
+  margin-right: 16px;
+  background: #fff;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.method-info h4 {
+  margin: 0 0 4px;
+  font-size: 16px;
+  color: #1E1E1E;
+}
+
+.method-info p {
+  margin: 0;
+  font-size: 12px;
+  color: #7A7A7A;
+}
+
+.method-check {
+  margin-left: auto;
+  color: #4A5CF5;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.gateway-pay-btn {
+  width: 100%;
+  padding: 16px;
+  background: #00D9A3;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.gateway-pay-btn:hover {
+  background: #00c48c;
+}
+
+.gateway-pay-btn:disabled {
+  background: #ccc;
+}
+
+.gateway-secure {
+  margin-top: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #10B981;
+  font-size: 12px;
+}

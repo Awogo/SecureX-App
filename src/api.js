@@ -1,7 +1,7 @@
-const BASE_URL = "https://securex-backend-ikr8.onrender.com";
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:4000";
 
 export const apiCall = async (endpoint, method = "GET", data = null) => {
-  const url = `${BASE_URL}${endpoint}`; // This combines base + endpoint
+  const url = `${BASE_URL}${endpoint}`;
   const token = localStorage.getItem("token");
 
   const headers = {

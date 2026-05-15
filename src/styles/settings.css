@@ -1,4 +1,4 @@
-/* Settings Page Layout */
+﻿/* Settings Page Layout */
 .settings-page {
   display: flex;
   min-height: 100vh;
@@ -57,7 +57,7 @@
   border: none;
   background: #f3f4f6;
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: 4px;
   text-align: left;
 }
 .settings-body {
@@ -104,7 +104,7 @@
   padding: 12px 16px;
   background: transparent;
   border: none;
-  border-radius: 8px;
+  border-radius: 4px;
   color: #7A7A7A;
   font-size: 14px;
   font-weight: 500;
@@ -126,7 +126,7 @@
 /* Settings Content (Right Column) */
 .settings-card {
   background: white;
-  border-radius: 16px;
+  border-radius: 4px;
   padding: 32px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.02);
   border: 1px solid #E5E7EB;
@@ -172,7 +172,7 @@
   padding: 10px 20px;
   background: #F6F7FB;
   border: 1px solid #E5E7EB;
-  border-radius: 8px;
+  border-radius: 4px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
@@ -213,7 +213,7 @@
   width: 100%;
   padding: 12px 16px;
   border: 1px solid #E5E7EB;
-  border-radius: 8px;
+  border-radius: 4px;
   font-size: 14px;
   transition: border-color 0.2s;
 }
@@ -250,7 +250,7 @@
   padding: 12px 24px;
   background: white;
   border: 1px solid #E5E7EB;
-  border-radius: 8px;
+  border-radius: 4px;
   font-weight: 600;
   color: #555;
   cursor: pointer;
@@ -260,7 +260,7 @@
   padding: 12px 24px;
   background: #4A5CF5;
   border: none;
-  border-radius: 8px;
+  border-radius: 4px;
   font-weight: 600;
   color: white;
   cursor: pointer;

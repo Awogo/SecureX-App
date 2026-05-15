@@ -1,15 +1,18 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import logoIcon from "../assets/logo-icon.png";
-import "../styles/auth.css";
-import { apiCall } from "../api"; // Import the helper
+import { useNavigate, useLocation } from "react-router-dom";
+import Button from "../components/Button";
+import Input from "../components/Input";
+import Card from "../components/Card";
+import { apiCall } from "../api";
+import { ShieldCheckIcon, EyeIcon, EyeSlashIcon, CheckIcon } from "@heroicons/react/24/outline";
 
 const Signup = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
-    email: "",
+    email: location.state?.email ?? "",
     password: "",
     confirmPassword: "",
   });
@@ -19,7 +22,6 @@ const Signup = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Password validation
   const [validations, setValidations] = useState({
     minLength: false,
     uppercase: false,
@@ -42,9 +44,9 @@ const Signup = () => {
     }
   };
 
-const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match");
       return;
@@ -54,15 +56,9 @@ const handleSubmit = async (e) => {
     setError("");
 
     try {
-      // Remove confirmPassword before sending
       const { confirmPassword, ...dataToSend } = formData;
-
-      // Call API
       await apiCall("/api/auth/register", "POST", dataToSend);
-
-      // Success -> Navigate to Verify Email and pass the email
       navigate("/verify-email", { state: { email: formData.email } });
-
     } catch (err) {
       setError(err.message || "Registration failed");
     } finally {
@@ -71,38 +67,99 @@ const handleSubmit = async (e) => {
   };
 
   return (
-    <div className="auth-page">
-        {/* Logo */}
-    <div>
-      <div className="auth-logo-section">
-      <div className="logo">
-      <div className="logo-wrapper">
-       <img src={logoIcon} alt="SecureX Icon" className="logo-icon" />
-      </div>
-         <div className="auth-brand">
-          <h2>SecureX</h2> <p>Safe payment for Africa SMEs</p>
-        </div>
-       </div>
-     </div>
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(180deg, var(--bg-canvas) 0%, var(--indigo-50) 100%)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 'var(--space-8) var(--space-4)',
+    }}>
+      <div style={{ maxWidth: '440px', width: '100%' }}>
+        {/* Auth Card */}
+        <Card padding="lg" style={{
+          boxShadow: '0 16px 48px rgba(15,18,48,0.10), 0 2px 8px rgba(15,18,48,0.04)',
+          borderRadius: 'var(--radius-2xl)',
+          border: '1px solid var(--border-100)',
+        }}>
+          {/* Logo and Brand */}
+          <div style={{ textAlign: 'center', marginBottom: 'var(--space-6)' }}>
+            <div style={{
+              width: '52px',
+              height: '52px',
+              background: 'linear-gradient(135deg, var(--navy-600) 0%, var(--indigo-600) 100%)',
+              borderRadius: 'var(--radius-2xl)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto var(--space-3)',
+              boxShadow: 'var(--shadow-primary)',
+            }}>
+              <ShieldCheckIcon style={{ width: '28px', height: '28px', color: 'white' }} />
+            </div>
+            <div style={{
+              fontFamily: 'var(--font-display)',
+              fontWeight: 'var(--w-bold)',
+              fontSize: 'var(--text-xl)',
+              color: 'var(--ink-800)',
+              marginBottom: 2,
+            }}>SecureX</div>
+            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-400)' }}>
+              Smart escrow for African SMEs
+            </div>
+          </div>
 
-        {/* Title */}
-        <h1 className="auth-heading">Create Your Account</h1>
-        <p className="auth-subheading">Join thousands securing their transactions</p>
+          <div style={{ textAlign: 'center', marginBottom: 'var(--space-6)' }}>
+            <h1 style={{
+              fontFamily: 'var(--font-display)',
+              fontWeight: 'var(--w-bold)',
+              fontSize: 'var(--text-3xl)',
+              letterSpacing: 'var(--tracking-tight)',
+              color: 'var(--ink-900)',
+              margin: '0 0 var(--space-2) 0'
+            }}>
+              Create your account
+            </h1>
+            <p style={{
+              fontFamily: 'var(--font-sans)',
+              fontSize: 'var(--text-base)',
+              color: 'var(--ink-500)',
+              margin: 0
+            }}>
+              Join thousands securing their transactions
+            </p>
+          </div>
 
-        {/* Error */}
-        {error && <div className="auth-error">{error}</div>}
-      <div className="auth-card">
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="auth-form">
-          <div className="form-row">
-            <div className="form-group">
-              <label>First Name</label>
-              <div className="input-container">
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="input-icon">
-                  <circle cx="9" cy="5.25" r="2.25" stroke="#7A7A7A" strokeWidth="1.5"/>
-                  <path d="M4.5 13.5C4.5 11.8431 5.84315 10.5 7.5 10.5H10.5C12.1569 10.5 13.5 11.8431 13.5 13.5V15H4.5V13.5Z" stroke="#7A7A7A" strokeWidth="1.5"/>
-                </svg>
-                <input
+          {/* Error Message */}
+          {error && (
+            <div style={{
+              background: 'var(--danger-100)',
+              border: '1px solid var(--danger-400)',
+              color: 'var(--danger-500)',
+              padding: 'var(--space-4)',
+              borderRadius: 'var(--radius-md)',
+              marginBottom: 'var(--space-6)',
+              fontSize: 'var(--text-sm)'
+            }}>
+              {error}
+            </div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
+            {/* Name Fields */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
+              <div style={{ minWidth: 0 }}>
+                <label style={{
+                  display: 'block',
+                  fontSize: 'var(--text-sm)',
+                  fontWeight: 'var(--w-medium)',
+                  color: 'var(--ink-700)',
+                  marginBottom: 'var(--space-2)'
+                }}>
+                  First Name
+                </label>
+                <Input
                   type="text"
                   name="firstName"
                   placeholder="Polani"
@@ -111,16 +168,18 @@ const handleSubmit = async (e) => {
                   required
                 />
               </div>
-            </div>
 
-            <div className="form-group">
-              <label>Last Name</label>
-              <div className="input-container">
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="input-icon">
-                  <circle cx="9" cy="5.25" r="2.25" stroke="#7A7A7A" strokeWidth="1.5"/>
-                  <path d="M4.5 13.5C4.5 11.8431 5.84315 10.5 7.5 10.5H10.5C12.1569 10.5 13.5 11.8431 13.5 13.5V15H4.5V13.5Z" stroke="#7A7A7A" strokeWidth="1.5"/>
-                </svg>
-                <input
+              <div style={{ minWidth: 0 }}>
+                <label style={{
+                  display: 'block',
+                  fontSize: 'var(--text-sm)',
+                  fontWeight: 'var(--w-medium)',
+                  color: 'var(--ink-700)',
+                  marginBottom: 'var(--space-2)'
+                }}>
+                  Last Name
+                </label>
+                <Input
                   type="text"
                   name="lastName"
                   placeholder="Adani"
@@ -130,16 +189,19 @@ const handleSubmit = async (e) => {
                 />
               </div>
             </div>
-          </div>
 
-          <div className="form-group">
-            <label>Email</label>
-            <div className="input-container">
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="input-icon">
-                <path d="M3 3H15C15.825 3 16.5 3.675 16.5 4.5V13.5C16.5 14.325 15.825 15 15 15H3C2.175 15 1.5 14.325 1.5 13.5V4.5C1.5 3.675 2.175 3 3 3Z" stroke="#7A7A7A" strokeWidth="1.5"/>
-                <path d="M16.5 4.5L9 9.75L1.5 4.5" stroke="#7A7A7A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              <input
+            {/* Email */}
+            <div>
+              <label style={{
+                display: 'block',
+                fontSize: 'var(--text-sm)',
+                fontWeight: 'var(--w-medium)',
+                color: 'var(--ink-700)',
+                marginBottom: 'var(--space-2)'
+              }}>
+                Email
+              </label>
+              <Input
                 type="email"
                 name="email"
                 placeholder="polaniadan@example.com"
@@ -148,107 +210,203 @@ const handleSubmit = async (e) => {
                 required
               />
             </div>
-          </div>
 
-          <div className="form-group">
-            <label>Password</label>
-            <div className="input-container">
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="input-icon">
-                <rect x="3" y="7.5" width="12" height="8.25" rx="1.5" stroke="#7A7A7A" strokeWidth="1.5"/>
-                <path d="M6 7.5V5.25C6 3.59315 7.34315 2.25 9 2.25C10.6569 2.25 12 3.59315 12 5.25V7.5" stroke="#7A7A7A" strokeWidth="1.5"/>
-              </svg>
-              <input
+            {/* Password */}
+            <div>
+              <label style={{
+                display: 'block',
+                fontSize: 'var(--text-sm)',
+                fontWeight: 'var(--w-medium)',
+                color: 'var(--ink-700)',
+                marginBottom: 'var(--space-2)'
+              }}>
+                Password
+              </label>
+              <Input
                 type={showPassword ? "text" : "password"}
                 name="password"
                 placeholder="Create a strong password"
                 value={formData.password}
                 onChange={handleChange}
                 required
+                trailing={
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: 0,
+                      display: 'flex',
+                      alignItems: 'center'
+                    }}
+                  >
+                    {showPassword ? (
+                      <EyeSlashIcon style={{ width: '20px', height: '20px', color: 'var(--ink-600)' }} />
+                    ) : (
+                      <EyeIcon style={{ width: '20px', height: '20px', color: 'var(--ink-600)' }} />
+                    )}
+                  </button>
+                }
               />
-              <button
-                type="button"
-                className="password-toggle"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                  <path d="M1.5 9C1.5 9 3.75 4.5 9 4.5C14.25 4.5 16.5 9 16.5 9C16.5 9 14.25 13.5 9 13.5C3.75 13.5 1.5 9 1.5 9Z" stroke="#7A7A7A" strokeWidth="1.5"/>
-                  <circle cx="9" cy="9" r="2.25" stroke="#7A7A7A" strokeWidth="1.5"/>
-                </svg>
-              </button>
+
+              {/* Password Requirements */}
+              {formData.password && (
+                <div style={{ marginTop: 'var(--space-3)', display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--space-2)',
+                    fontSize: 'var(--text-sm)',
+                    color: validations.minLength ? 'var(--success-600)' : 'var(--ink-500)'
+                  }}>
+                    <CheckIcon style={{
+                      width: '16px',
+                      height: '16px',
+                      color: validations.minLength ? 'var(--success-500)' : 'var(--ink-400)'
+                    }} />
+                    <span>Minimum 8 characters</span>
+                  </div>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--space-2)',
+                    fontSize: 'var(--text-sm)',
+                    color: validations.uppercase ? 'var(--success-600)' : 'var(--ink-500)'
+                  }}>
+                    <CheckIcon style={{
+                      width: '16px',
+                      height: '16px',
+                      color: validations.uppercase ? 'var(--success-500)' : 'var(--ink-400)'
+                    }} />
+                    <span>At least 1 uppercase letter</span>
+                  </div>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--space-2)',
+                    fontSize: 'var(--text-sm)',
+                    color: validations.number ? 'var(--success-600)' : 'var(--ink-500)'
+                  }}>
+                    <CheckIcon style={{
+                      width: '16px',
+                      height: '16px',
+                      color: validations.number ? 'var(--success-500)' : 'var(--ink-400)'
+                    }} />
+                    <span>At least 1 number</span>
+                  </div>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--space-2)',
+                    fontSize: 'var(--text-sm)',
+                    color: validations.special ? 'var(--success-600)' : 'var(--ink-500)'
+                  }}>
+                    <CheckIcon style={{
+                      width: '16px',
+                      height: '16px',
+                      color: validations.special ? 'var(--success-500)' : 'var(--ink-400)'
+                    }} />
+                    <span>At least 1 special character</span>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Password Requirements */}
-            {formData.password && (
-              <div className="password-requirements">
-                <div className={`req-item ${validations.minLength ? "valid" : ""}`}>
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/>
-                    {validations.minLength && <path d="M5 8L7 10L11 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>}
-                  </svg>
-                  <span>Minimum 8 characters</span>
-                </div>
-                <div className={`req-item ${validations.uppercase ? "valid" : ""}`}>
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/>
-                    {validations.uppercase && <path d="M5 8L7 10L11 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>}
-                  </svg>
-                  <span>At least 1 uppercase letter</span>
-                </div>
-                <div className={`req-item ${validations.number ? "valid" : ""}`}>
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/>
-                    {validations.number && <path d="M5 8L7 10L11 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>}
-                  </svg>
-                  <span>At least 1 number</span>
-                </div>
-                <div className={`req-item ${validations.special ? "valid" : ""}`}>
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/>
-                    {validations.special && <path d="M5 8L7 10L11 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>}
-                  </svg>
-                  <span>At least 1 special character</span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="form-group">
-            <label>Confirm Password</label>
-            <div className="input-container">
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="input-icon">
-                <rect x="3" y="7.5" width="12" height="8.25" rx="1.5" stroke="#7A7A7A" strokeWidth="1.5"/>
-                <path d="M6 7.5V5.25C6 3.59315 7.34315 2.25 9 2.25C10.6569 2.25 12 3.59315 12 5.25V7.5" stroke="#7A7A7A" strokeWidth="1.5"/>
-              </svg>
-              <input
+            {/* Confirm Password */}
+            <div>
+              <label style={{
+                display: 'block',
+                fontSize: 'var(--text-sm)',
+                fontWeight: 'var(--w-medium)',
+                color: 'var(--ink-700)',
+                marginBottom: 'var(--space-2)'
+              }}>
+                Confirm Password
+              </label>
+              <Input
                 type={showConfirmPassword ? "text" : "password"}
                 name="confirmPassword"
                 placeholder="Re-enter your password"
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 required
+                trailing={
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: 0,
+                      display: 'flex',
+                      alignItems: 'center'
+                    }}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeSlashIcon style={{ width: '20px', height: '20px', color: 'var(--ink-600)' }} />
+                    ) : (
+                      <EyeIcon style={{ width: '20px', height: '20px', color: 'var(--ink-600)' }} />
+                    )}
+                  </button>
+                }
               />
-              <button
-                type="button"
-                className="password-toggle"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              >
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                  <path d="M1.5 9C1.5 9 3.75 4.5 9 4.5C14.25 4.5 16.5 9 16.5 9C16.5 9 14.25 13.5 9 13.5C3.75 13.5 1.5 9 1.5 9Z" stroke="#7A7A7A" strokeWidth="1.5"/>
-                  <circle cx="9" cy="9" r="2.25" stroke="#7A7A7A" strokeWidth="1.5"/>
-                </svg>
-              </button>
             </div>
-          </div>
 
-          <button type="submit" className="auth-button" disabled={loading}>
-            {loading ? "Creating Account..." : "Create Account"}
-          </button>
-        </form>
-      </div>
-        {/* Footer */}
-        <p className="auth-footer">
-          Already have an account? <a href="/login">Sign in</a>
-        </p>
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={loading}
+              style={{ width: '100%', marginTop: 'var(--space-2)' }}
+            >
+              {loading ? "Creating Account..." : "Create Account"}
+            </Button>
+
+            {/* Security badge — inside the form */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 'var(--space-2)',
+              padding: 'var(--space-3)',
+              background: 'rgba(0,217,163,0.08)',
+              borderRadius: 'var(--radius-md)',
+              color: '#047857',
+              fontSize: 'var(--text-xs)',
+              fontWeight: 'var(--w-medium)',
+              marginTop: 'var(--space-2)',
+            }}>
+              <ShieldCheckIcon style={{ width: '14px', height: '14px', flexShrink: 0 }} />
+              Bank-level encryption · Your data is protected
+            </div>
+          </form>
+
+          {/* Footer */}
+          <div style={{ marginTop: 'var(--space-6)', textAlign: 'center' }}>
+            <p style={{
+              color: 'var(--ink-500)',
+              fontSize: 'var(--text-sm)',
+              margin: 0
+            }}>
+              Already have an account?{" "}
+              <button
+                onClick={() => navigate("/login")}
+                style={{
+                  color: 'var(--indigo-600)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: 'var(--w-semibold)',
+                  padding: 0
+                }}
+              >
+                Sign in
+              </button>
+            </p>
+          </div>
+        </Card>
       </div>
     </div>
   );

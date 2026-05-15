@@ -1,19 +1,18 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import logoBlue from "../assets/logo-blue.png";
 import "../styles/transaction.css";
 import { apiCall } from "../api";
+import DashboardSidebar from "../components/DashboardSidebar";
 
 const Transactions = () => {
   const navigate = useNavigate();
-  const [activeNav, setActiveNav] = useState("transactions");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
   const [userData, setUserData] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedTxn, setSelectedTxn] = useState(null);
 
-  // Helper: Initials
   const getInitials = (user) => {
     if (!user) return "??";
     const first = user.firstName?.[0] || "";
@@ -26,29 +25,49 @@ const Transactions = () => {
     return user.email?.[0]?.toUpperCase() || "U";
   };
 
-  // Fetch Data
+  const formatCurrency = (amount, currency) => {
+    const symbol = (currency || "NGN") === "USD" ? "$" : "₦";
+    return `${symbol}${Number(amount || 0).toLocaleString("en-NG")}`;
+  };
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "—";
+    return new Date(dateStr).toLocaleDateString("en-NG", {
+      day: "numeric", month: "short", year: "numeric",
+    });
+  };
+
+  const formatDateTime = (dateStr) => {
+    if (!dateStr) return "—";
+    return new Date(dateStr).toLocaleString("en-NG", {
+      day: "numeric", month: "short", year: "numeric",
+      hour: "2-digit", minute: "2-digit",
+    });
+  };
+
+  const shortId = (id) => {
+    if (!id) return "—";
+    const str = String(id);
+    return str.length > 12 ? str.slice(0, 12) + "…" : str;
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // 1. Fetch User Profile
         const profileData = await apiCall("/api/users/profile", "GET");
         const rawUser = profileData.data || profileData.user || profileData;
-        
         let firstName = rawUser.firstName;
         let lastName = rawUser.lastName;
         if (!firstName && rawUser.name) {
-            const parts = rawUser.name.split(" ");
-            firstName = parts[0];
-            lastName = parts.slice(1).join(" ");
+          const parts = rawUser.name.split(" ");
+          firstName = parts[0];
+          lastName = parts.slice(1).join(" ");
         }
-        setUserData({ firstName, lastName, email: rawUser.email });
+        setUserData({ id: rawUser._id || rawUser.id, firstName, lastName, email: rawUser.email });
 
-        // 2. Fetch Transactions
         const txnRes = await apiCall("/api/transactions", "GET");
-          const txnData = txnRes.data || txnRes.transactions || txnRes;
+        const txnData = txnRes.data || txnRes.transactions || txnRes;
         setTransactions(Array.isArray(txnData) ? txnData : []);
-
-
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -58,77 +77,171 @@ const Transactions = () => {
     fetchData();
   }, []);
 
-  
   const getStatusBadge = (status) => {
     const s = (status || "pending").toLowerCase();
-    const badges = {
-      completed: { text: "Completed", class: "status-completed" },
-      delivered: { text: "Delivered", class: "status-progress" },
-      "in-progress": { text: "In Progress", class: "status-progress" },
-      in_progress: { text: "In Progress", class: "status-progress" },
-      pending: { text: "Pending", class: "status-pending" },
-      cancelled: { text: "Cancelled", class: "status-cancelled" }
+    const map = {
+      completed:       { text: "Completed",       cls: "status-completed" },
+      delivered:       { text: "Delivered",        cls: "status-progress"  },
+      "in-progress":   { text: "In Progress",      cls: "status-progress"  },
+      in_progress:     { text: "In Progress",      cls: "status-progress"  },
+      pending:         { text: "Pending",          cls: "status-pending"   },
+      awaiting_payment:{ text: "Awaiting Payment", cls: "status-pending"   },
+      cancelled:       { text: "Cancelled",        cls: "status-cancelled" },
+      disputed:        { text: "Disputed",         cls: "status-cancelled" },
     };
-    return badges[s] || badges.pending;
+    return map[s] || map.pending;
   };
 
-   const filteredTransactions = transactions.filter(txn => {
+  const getCounterparty = (txn) => {
+    const uid = userData?.id;
+    const isSellerMe = txn.sellerId === uid || txn.seller?.id === uid || txn.seller?._id === uid;
+    if (isSellerMe) {
+      const b = txn.buyer;
+      if (b?.firstName) return `${b.firstName} ${b.lastName || ""}`.trim();
+      return txn.otherPartyEmail || txn.buyerName || "—";
+    }
+    const s = txn.seller;
+    if (s?.firstName) return `${s.firstName} ${s.lastName || ""}`.trim();
+    return txn.sellerName || txn.otherPartyEmail || "—";
+  };
+
+  const filteredTransactions = transactions.filter((txn) => {
     const status = (txn.status || "").toLowerCase();
     if (activeTab === "all") return true;
     if (activeTab === "completed") return status === "completed";
     if (activeTab === "pending") return status === "pending" || status === "awaiting_payment";
-    if (activeTab === "in-progress") return status === "in_progress" || status === "in-progress" || status === "delivered";
+    if (activeTab === "in-progress")
+      return status === "in_progress" || status === "in-progress" || status === "delivered";
     return true;
   });
 
+  const txnId = (txn) => txn.id || txn._id;
+
   return (
     <div className="transaction-page">
-      {/* Sidebar */}
-      <aside className={`transaction-sidebar ${sidebarOpen ? "open" : ""}`}>
-        <div className="sidebar-header">
-          <img src={logoBlue} alt="SecureX" className="sidebar-logo" />
-          <button className="close-sidebar-btn" onClick={() => setSidebarOpen(false)}>✕</button>
-        </div>
+      <DashboardSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-        <nav className="sidebar-nav">
-          <button className={`nav-item ${activeNav === "dashboard" ? "active" : ""}`} onClick={() => navigate("/dashboard")}>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/><rect x="11" y="3" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/><rect x="3" y="11" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/><rect x="11" y="11" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/></svg>
-            <span>Dashboard</span>
-          </button>
-          <button className={`nav-item ${activeNav === "transactions" ? "active" : ""}`} onClick={() => setActiveNav("transactions")}>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 5H17M3 10H17M3 15H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-            <span>Transactions</span>
-          </button>
-          <button className={`nav-item ${activeNav === "ai" ? "active" : ""}`} onClick={() => navigate("/ai-insights")}>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="1.5"/><path d="M10 6V10L13 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-            <span>AI Insights</span>
-          </button>
-          <button className={`nav-item ${activeNav === "verification" ? "active" : ""}`} onClick={() => navigate("/verification")}>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2L4 5V9C4 12.5 7 16 10 17C13 16 16 12.5 16 9V5L10 2Z" stroke="currentColor" strokeWidth="1.5"/><path d="M7 10L9 12L13 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            <span>Verification</span>
-          </button>
-          <button className={`nav-item ${activeNav === "settings" ? "active" : ""}`} onClick={() => navigate("/settings")}>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3" stroke="currentColor" strokeWidth="1.5"/><path d="M10 2V4M10 16V18M18 10H16M4 10H2M15.66 4.34L14.24 5.76M5.76 14.24L4.34 15.66M15.66 15.66L14.24 14.24M5.76 5.76L4.34 4.34" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-            <span>Settings</span>
-          </button>
-        </nav>
+      {/* ── Transaction Detail Modal ── */}
+      {selectedTxn && (
+        <div className="txn-modal-overlay" onClick={() => setSelectedTxn(null)}>
+          <div className="txn-modal" onClick={(e) => e.stopPropagation()}>
+            {/* Modal Header */}
+            <div className="txn-modal-header">
+              <div>
+                <h2 className="txn-modal-title">Transaction Details</h2>
+                <p className="txn-modal-ref">Ref: {selectedTxn.reference || shortId(txnId(selectedTxn))}</p>
+              </div>
+              <button className="txn-modal-close" onClick={() => setSelectedTxn(null)} aria-label="Close">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <path d="M14 4L4 14M4 4L14 14" stroke="#1E1E1E" strokeWidth="1.8" strokeLinecap="round"/>
+                </svg>
+              </button>
+            </div>
 
-        <div className="sidebar-footer">
-          <div className="user-profile">
-            <div className="user-avatar">{getInitials(userData)}</div>
-            <div className="user-info">
-              <p className="user-name">{userData ? `${userData.firstName} ${userData.lastName}` : "Guest"}</p>
-              <p className="user-email">{userData?.email || "..."}</p>
+            {/* Amount + Status Banner */}
+            <div className="txn-modal-banner">
+              <div>
+                <p className="txn-banner-label">Amount</p>
+                <p className="txn-banner-amount">{formatCurrency(selectedTxn.amount, selectedTxn.currency)}</p>
+              </div>
+              <span className={`status-badge ${getStatusBadge(selectedTxn.status).cls}`}>
+                {getStatusBadge(selectedTxn.status).text}
+              </span>
+            </div>
+
+            <div className="txn-modal-body">
+              {/* Item Details */}
+              <div className="txn-modal-section">
+                <h4 className="txn-section-title">Item Details</h4>
+                <div className="txn-detail-row">
+                  <span className="txn-detail-label">Item</span>
+                  <span className="txn-detail-value">{selectedTxn.item || "—"}</span>
+                </div>
+                <div className="txn-detail-row">
+                  <span className="txn-detail-label">Description</span>
+                  <span className="txn-detail-value txn-detail-desc">{selectedTxn.description || "—"}</span>
+                </div>
+                <div className="txn-detail-row">
+                  <span className="txn-detail-label">Type</span>
+                  <span className="txn-detail-value">{selectedTxn.transactionType || selectedTxn.type || "—"}</span>
+                </div>
+                <div className="txn-detail-row">
+                  <span className="txn-detail-label">Currency</span>
+                  <span className="txn-detail-value">{selectedTxn.currency || "NGN"}</span>
+                </div>
+                <div className="txn-detail-row">
+                  <span className="txn-detail-label">Delivery Days</span>
+                  <span className="txn-detail-value">{selectedTxn.setDeliveryDays ?? 2} day{(selectedTxn.setDeliveryDays ?? 2) !== 1 ? "s" : ""}</span>
+                </div>
+              </div>
+
+              {/* Parties */}
+              <div className="txn-modal-section">
+                <h4 className="txn-section-title">Parties</h4>
+                <div className="txn-detail-row">
+                  <span className="txn-detail-label">Seller</span>
+                  <span className="txn-detail-value">
+                    {selectedTxn.seller?.firstName
+                      ? `${selectedTxn.seller.firstName} ${selectedTxn.seller.lastName || ""}`.trim()
+                      : selectedTxn.sellerName || "—"}
+                  </span>
+                </div>
+                <div className="txn-detail-row">
+                  <span className="txn-detail-label">Buyer</span>
+                  <span className="txn-detail-value">
+                    {selectedTxn.buyer?.firstName
+                      ? `${selectedTxn.buyer.firstName} ${selectedTxn.buyer.lastName || ""}`.trim()
+                      : selectedTxn.buyerName || "—"}
+                  </span>
+                </div>
+                {selectedTxn.otherPartyEmail && (
+                  <div className="txn-detail-row">
+                    <span className="txn-detail-label">Other Party Email</span>
+                    <span className="txn-detail-value">{selectedTxn.otherPartyEmail}</span>
+                  </div>
+                )}
+                {selectedTxn.otherPartyPhone && (
+                  <div className="txn-detail-row">
+                    <span className="txn-detail-label">Other Party Phone</span>
+                    <span className="txn-detail-value">{selectedTxn.otherPartyPhone}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Timeline */}
+              <div className="txn-modal-section">
+                <h4 className="txn-section-title">Timeline</h4>
+                <div className="txn-detail-row">
+                  <span className="txn-detail-label">Created</span>
+                  <span className="txn-detail-value">{formatDateTime(selectedTxn.createdAt)}</span>
+                </div>
+                <div className="txn-detail-row">
+                  <span className="txn-detail-label">Last Updated</span>
+                  <span className="txn-detail-value">{formatDateTime(selectedTxn.updatedAt)}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="txn-modal-footer">
+              <button className="txn-btn-close" onClick={() => setSelectedTxn(null)}>Close</button>
+              {(selectedTxn.status === "in-progress" ||
+                selectedTxn.status === "in_progress" ||
+                selectedTxn.status === "delivered") && (
+                <button
+                  className="txn-btn-action"
+                  onClick={() => {
+                    setSelectedTxn(null);
+                    navigate(`/transactions/${txnId(selectedTxn)}`);
+                  }}
+                >
+                  Take Action
+                </button>
+              )}
             </div>
           </div>
-          <button className="sign-out-btn" onClick={() => { localStorage.removeItem("token"); navigate("/login"); }}>
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M7 13L3 9M3 9L7 5M3 9H11M11 3H13C14.1046 3 15 3.89543 15 5V13C15 14.1046 14.1046 15 13 15H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            <span>Sign Out</span>
-          </button>
         </div>
-      </aside>
-
-      {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
+      )}
 
       {/* Main Content */}
       <main className="transaction-main">
@@ -136,12 +249,10 @@ const Transactions = () => {
           <button className="mobile-menu-btn" onClick={() => setSidebarOpen(true)}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 6H21M3 12H21M3 18H21" stroke="#1E1E1E" strokeWidth="2" strokeLinecap="round"/></svg>
           </button>
-
           <div className="search-bar">
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="8" cy="8" r="5.25" stroke="#7A7A7A" strokeWidth="1.5"/><path d="M12 12L15.5 15.5" stroke="#7A7A7A" strokeWidth="1.5" strokeLinecap="round"/></svg>
             <input type="text" placeholder="Search transactions..." />
           </div>
-
           <div className="header-actions">
             <button className="icon-btn">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 4C10 4 6 7 6 10C6 12 7.34315 13 9 13H11C12.6569 13 14 12 14 10C14 7 10 4 10 4Z" stroke="#1E1E1E" strokeWidth="1.5"/><path d="M9 16H11" stroke="#1E1E1E" strokeWidth="1.5" strokeLinecap="round"/></svg>
@@ -149,7 +260,6 @@ const Transactions = () => {
             </button>
             <button className="user-btn">
               <div className="user-avatar-small">{getInitials(userData)}</div>
-              <span className="notification-badge">2</span>
             </button>
           </div>
         </header>
@@ -158,7 +268,7 @@ const Transactions = () => {
           <div className="content-header">
             <div>
               <h1>Transactions</h1>
-              <p className="subtitle">View and manage all your transactions</p>
+              <p className="subtitle">View and manage all your escrow transactions</p>
             </div>
             <button className="btn-new-transaction" onClick={() => navigate("/create-transaction")}>
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 4V16M4 10H16" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
@@ -167,55 +277,64 @@ const Transactions = () => {
           </div>
 
           <div className="tabs">
-            <button className={`tab ${activeTab === "all" ? "active" : ""}`} onClick={() => setActiveTab("all")}>All Transactions</button>
-            <button className={`tab ${activeTab === "completed" ? "active" : ""}`} onClick={() => setActiveTab("completed")}>Completed</button>
-            <button className={`tab ${activeTab === "pending" ? "active" : ""}`} onClick={() => setActiveTab("pending")}>Pending</button>
-            <button className={`tab ${activeTab === "in-progress" ? "active" : ""}`} onClick={() => setActiveTab("in-progress")}>In Progress</button>
+            {["all", "completed", "pending", "in-progress"].map((tab) => (
+              <button
+                key={tab}
+                className={`tab ${activeTab === tab ? "active" : ""}`}
+                onClick={() => setActiveTab(tab)}
+              >
+                {tab === "all" ? "All" : tab === "in-progress" ? "In Progress" : tab.charAt(0).toUpperCase() + tab.slice(1)}
+              </button>
+            ))}
           </div>
 
           <div className="table-container">
             {loading ? (
-              <div style={{textAlign: 'center', padding: '20px'}}>Loading transactions...</div>
+              <div style={{ textAlign: "center", padding: "40px", color: "#7A7A7A" }}>
+                Loading transactions...
+              </div>
+            ) : filteredTransactions.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "60px 20px" }}>
+                <p style={{ color: "#7A7A7A", fontSize: 14, margin: 0 }}>No transactions found.</p>
+              </div>
             ) : (
               <table className="transactions-table">
                 <thead>
                   <tr>
-                    <th>Transaction ID</th>
+                    <th>Reference</th>
+                    <th>Item</th>
                     <th>Counterparty</th>
                     <th>Type</th>
                     <th>Amount</th>
+                    <th>Delivery</th>
                     <th>Date</th>
                     <th>Status</th>
                     <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredTransactions.length === 0 ? (
-                    <tr>
-                      <td colSpan="7" style={{textAlign: 'center'}}>No transactions found.</td>
-                    </tr>
-                  ) : (
-                    filteredTransactions.map((txn) => {
-                      const statusBadge = getStatusBadge(txn.status);
-                      return (
-                        <tr key={txn._id || txn.id}>
-                          <td className="txn-id">{txn.reference || txn._id}</td>
-                          <td>{txn.counterparty?.name || txn.buyerName || "N/A"}</td>
-                          <td>{txn.type || "Sale"}</td>
-                          <td className="amount">₦{txn.amount?.toLocaleString()}</td>
-                          <td>{new Date(txn.createdAt).toLocaleDateString()}</td>
-                          <td>
-                            <span className={`status-badge ${statusBadge.class}`}>
-                              {statusBadge.text}
-                            </span>
-                          </td>
-                          <td>
-                            <button className="btn-view" onClick={() => navigate(`/transactions/${txn._id}`)}>View</button>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
+                  {filteredTransactions.map((txn) => {
+                    const badge = getStatusBadge(txn.status);
+                    return (
+                      <tr key={txnId(txn)}>
+                        <td className="txn-id" title={txnId(txn)}>{shortId(txn.reference || txnId(txn))}</td>
+                        <td className="txn-item">{txn.item || "—"}</td>
+                        <td>{getCounterparty(txn)}</td>
+                        <td>{txn.transactionType || txn.type || "—"}</td>
+                        <td className="amount">{formatCurrency(txn.amount, txn.currency)}</td>
+                        <td>{txn.setDeliveryDays ?? 2}d</td>
+                        <td>{formatDate(txn.createdAt)}</td>
+                        <td>
+                          <span className={`status-badge ${badge.cls}`}>{badge.text}</span>
+                        </td>
+                        <td>
+                          <button className="btn-view" onClick={() => setSelectedTxn(txn)}>
+                            View
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             )}

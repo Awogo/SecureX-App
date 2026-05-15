@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import logoIcon from "../assets/logo-icon.png";
-import "../styles/auth.css";
-import { apiCall } from "../api"; // Import the helper
+import Button from "../components/Button";
+import Input from "../components/Input";
+import Card from "../components/Card";
+import { apiCall } from "../api";
+import { EyeIcon, EyeSlashIcon, ShieldCheckIcon } from "@heroicons/react/24/outline";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -23,15 +25,10 @@ const Login = () => {
     setError("");
 
     try {
-      // 1. Login using the new API helper
       const data = await apiCall("/api/auth/login", "POST", formData);
-        const response = data; // Assuming the API returns { token: "..." }
-      // 2. Save Token
+      const response = data;
       localStorage.setItem("token", response.token);
-
-      // 3. Redirect to Dashboard
       navigate("/dashboard");
-
     } catch (err) {
       setError(err.message || "Invalid credentials");
     } finally {
@@ -39,41 +36,98 @@ const Login = () => {
     }
   };
 
-
   return (
-<div className="auth-page">
-        {/* Logo */}
-  <div>
-   <div className="auth-logo-section">
-    <div className="logo">
-     <div className="logo-wrapper">
-       <img src={logoIcon} alt="SecureX Icon" className="logo-icon" />
-      </div>
-         <div className="auth-brand">
-        <h2>SecureX</h2><p>Safe payment for Africa SMEs</p>
-        </div> 
-       </div>
-    
-  </div>
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(180deg, var(--bg-canvas) 0%, var(--indigo-50) 100%)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 'var(--space-4)',
+    }}>
+      <div style={{ maxWidth: '440px', width: '100%' }}>
+        {/* Auth Card */}
+        <Card padding="lg" style={{
+          boxShadow: '0 16px 48px rgba(15,18,48,0.10), 0 2px 8px rgba(15,18,48,0.04)',
+          borderRadius: 'var(--radius-2xl)',
+          border: '1px solid var(--border-100)',
+        }}>
+          {/* Logo and Brand */}
+          <div style={{ textAlign: 'center', marginBottom: 'var(--space-6)' }}>
+            <div style={{
+              width: '52px',
+              height: '52px',
+              background: 'linear-gradient(135deg, var(--navy-600) 0%, var(--indigo-600) 100%)',
+              borderRadius: 'var(--radius-2xl)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto var(--space-3)',
+              boxShadow: 'var(--shadow-primary)',
+            }}>
+              <ShieldCheckIcon style={{ width: '28px', height: '28px', color: 'white' }} />
+            </div>
+            <div style={{
+              fontFamily: 'var(--font-display)',
+              fontWeight: 'var(--w-bold)',
+              fontSize: 'var(--text-xl)',
+              color: 'var(--ink-800)',
+              marginBottom: 2,
+            }}>SecureX</div>
+            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-400)' }}>
+              Smart escrow for African SMEs
+            </div>
+          </div>
 
+          <div style={{ textAlign: 'center', marginBottom: 'var(--space-6)' }}>
+            <h1 style={{
+              fontFamily: 'var(--font-display)',
+              fontWeight: 'var(--w-bold)',
+              fontSize: 'var(--text-3xl)',
+              letterSpacing: 'var(--tracking-tight)',
+              color: 'var(--ink-900)',
+              margin: '0 0 var(--space-2) 0'
+            }}>
+              Welcome back
+            </h1>
+            <p style={{
+              fontFamily: 'var(--font-sans)',
+              fontSize: 'var(--text-base)',
+              color: 'var(--ink-500)',
+              margin: 0
+            }}>
+              Sign in to continue securing your transactions.
+            </p>
+          </div>
 
-        {/* Title */}
-        <h1 className="auth-heading">Welcome Back</h1>
-        <p className="auth-subheading">Sign in to access your account</p>
+          {/* Error Message */}
+          {error && (
+            <div style={{
+              background: 'var(--danger-100)',
+              border: '1px solid var(--danger-400)',
+              color: 'var(--danger-500)',
+              padding: 'var(--space-4)',
+              borderRadius: 'var(--radius-md)',
+              marginBottom: 'var(--space-6)',
+              fontSize: 'var(--text-sm)'
+            }}>
+              {error}
+            </div>
+          )}
 
-        {/* Error */}
-        {error && <div className="auth-error">{error}</div>}
-        <div className="auth-card">
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="auth-form">
-          <div className="form-group">
-            <label>Email</label>
-            <div className="input-container">
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="input-icon">
-                <path d="M3 3H15C15.825 3 16.5 3.675 16.5 4.5V13.5C16.5 14.325 15.825 15 15 15H3C2.175 15 1.5 14.325 1.5 13.5V4.5C1.5 3.675 2.175 3 3 3Z" stroke="#7A7A7A" strokeWidth="1.5"/>
-                <path d="M16.5 4.5L9 9.75L1.5 4.5" stroke="#7A7A7A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              <input
+          {/* Form */}
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
+            <div>
+              <label style={{
+                display: 'block',
+                fontSize: 'var(--text-sm)',
+                fontWeight: 'var(--w-medium)',
+                color: 'var(--ink-700)',
+                marginBottom: 'var(--space-2)'
+              }}>
+                Email
+              </label>
+              <Input
                 type="email"
                 name="email"
                 placeholder="Enter your email"
@@ -82,62 +136,115 @@ const Login = () => {
                 required
               />
             </div>
-          </div>
 
-          <div className="form-group">
-            <label>Password</label>
-            <div className="input-container">
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="input-icon">
-                <rect x="3" y="7.5" width="12" height="8.25" rx="1.5" stroke="#7A7A7A" strokeWidth="1.5"/>
-                <path d="M6 7.5V5.25C6 3.59315 7.34315 2.25 9 2.25C10.6569 2.25 12 3.59315 12 5.25V7.5" stroke="#7A7A7A" strokeWidth="1.5"/>
-              </svg>
-              <input
+            <div>
+              <label style={{
+                display: 'block',
+                fontSize: 'var(--text-sm)',
+                fontWeight: 'var(--w-medium)',
+                color: 'var(--ink-700)',
+                marginBottom: 'var(--space-2)'
+              }}>
+                Password
+              </label>
+              <Input
                 type={showPassword ? "text" : "password"}
                 name="password"
                 placeholder="Enter your password"
                 value={formData.password}
                 onChange={handleChange}
                 required
+                trailing={
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: 0,
+                      display: 'flex',
+                      alignItems: 'center'
+                    }}
+                  >
+                    {showPassword ? (
+                      <EyeSlashIcon style={{ width: '20px', height: '20px', color: 'var(--ink-600)' }} />
+                    ) : (
+                      <EyeIcon style={{ width: '20px', height: '20px', color: 'var(--ink-600)' }} />
+                    )}
+                  </button>
+                }
               />
+              <div style={{ marginTop: 'var(--space-2)', textAlign: 'right' }}>
+                <button
+                  type="button"
+                  onClick={() => navigate("/forgot-password")}
+                  style={{
+                    fontSize: 'var(--text-sm)',
+                    color: 'var(--indigo-600)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: 0
+                  }}
+                >
+                  Forgot Password?
+                </button>
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={loading}
+              style={{ width: '100%', marginTop: 'var(--space-2)' }}
+            >
+              {loading ? "Signing in..." : "Sign in"}
+            </Button>
+
+            {/* Security badge — inside the form */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 'var(--space-2)',
+              padding: 'var(--space-3)',
+              background: 'rgba(0,217,163,0.08)',
+              borderRadius: 'var(--radius-md)',
+              color: '#047857',
+              fontSize: 'var(--text-xs)',
+              fontWeight: 'var(--w-medium)',
+              marginTop: 'var(--space-2)',
+            }}>
+              <ShieldCheckIcon style={{ width: '14px', height: '14px', flexShrink: 0 }} />
+              Bank-level encryption · Your data is protected
+            </div>
+          </form>
+
+          {/* Footer */}
+          <div style={{ marginTop: 'var(--space-6)', textAlign: 'center' }}>
+            <p style={{
+              color: 'var(--ink-500)',
+              fontSize: 'var(--text-sm)',
+              margin: 0
+            }}>
+              New to SecureX?{" "}
               <button
-                type="button"
-                className="password-toggle"
-                onClick={() => setShowPassword(!showPassword)}
+                onClick={() => navigate("/signup")}
+                style={{
+                  color: 'var(--indigo-600)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: 'var(--w-semibold)',
+                  padding: 0
+                }}
               >
-                {showPassword ? (
-                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                    <path d="M1.5 9C1.5 9 3.75 4.5 9 4.5C14.25 4.5 16.5 9 16.5 9C16.5 9 14.25 13.5 9 13.5C3.75 13.5 1.5 9 1.5 9Z" stroke="#7A7A7A" strokeWidth="1.5"/>
-                    <circle cx="9" cy="9" r="2.25" stroke="#7A7A7A" strokeWidth="1.5"/>
-                  </svg>
-                ) : (
-                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                    <path d="M2.25 2.25L15.75 15.75M7.5 7.5C7.03587 7.96413 6.75 8.60218 6.75 9.3C6.75 10.7912 7.9588 12 9.45 12C10.1478 12 10.7859 11.7141 11.25 11.25" stroke="#7A7A7A" strokeWidth="1.5" strokeLinecap="round"/>
-                  </svg>
-                )}
+                Create an account
               </button>
-            </div>
-            <div className="form-footer">
-              <a href="/forgot-password" className="link-text">Forgot Password?</a>
-            </div>
+            </p>
           </div>
-
-          <button type="submit" className="auth-button" disabled={loading}>
-            {loading ? "Signing in..." : "Sign in"}
-          </button>
-        </form>
-        </div>
-        
-        {/* Footer */}
-        <p className="auth-footer">
-          Don't have an account? <a href="/signup">Sign Up</a>
-        </p>
-
-        <div className="auth-secure">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M7 1L2 3V6.5C2 9.5 4.5 12 7 13C9.5 12 12 9.5 12 6.5V3L7 1Z" fill="#00D9A3"/>
-          </svg>
-          <span>Secured with 256-bit encryption</span>
-        </div>
+        </Card>
       </div>
     </div>
   );

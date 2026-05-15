@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import logoIcon from "../assets/logo-icon.png";
 import "../styles/auth.css";
+import { apiCall } from "../api";
 
 const ResetPassword = () => {
   const navigate = useNavigate();
@@ -78,26 +79,16 @@ const ResetPassword = () => {
     setError("");
 
     try {
-      const response = await fetch("http://100.53.84.123/api/auth/reset-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: email,
-          otp: otp.join(""), // Combine OTP array into string
-          newPassword: formData.password
-        }),
+      await apiCall("/api/auth/reset-password", "POST", {
+        email,
+        otp: otp.join(""),
+        newPassword: formData.password,
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        alert("Password reset successful! Please login.");
-        navigate("/login");
-      } else {
-        setError(data.message || "Failed to reset password");
-      }
+      alert("Password reset successful! Please login.");
+      navigate("/login");
     } catch (err) {
-      setError("Network error. Please try again.");
+      setError(err.message || "Failed to reset password");
     } finally {
       setLoading(false);
     }

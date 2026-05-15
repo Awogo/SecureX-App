@@ -1,4 +1,4 @@
-html, body {
+﻿html, body {
   overflow-x: hidden;
 }
 
@@ -80,7 +80,7 @@ body {
 .nav-btn-signin,
 .nav-btn-signup {
   padding: 12px 26px;
-  border-radius: 8px;
+  border-radius: 4px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -102,7 +102,7 @@ body {
   background: white;
   border: none;
   padding: 12px 26px;
-  border-radius: 10px;
+  border-radius: 4px;
   font-weight: 600;
   
 }
@@ -158,7 +158,7 @@ body {
 /* Email Input Container */
 .email-input-container {
   background:transparent;
-  border-radius: 12px;
+  border-radius: 4px;
   padding: 6px;
   display: flex;
   align-items: center;
@@ -170,7 +170,7 @@ body {
 .hero-email-field {
   flex: 1;
   border: none;
-  border-radius: 10px;
+  border-radius: 4px;
   outline: none;
   padding: 14px 16px;
   font-size: 15px;
@@ -186,7 +186,7 @@ body {
   padding: 14px 28px;
   background: #00D9A3;
   border: none;
-  border-radius: 8px;
+  border-radius: 4px;
   color: white;
   font-weight: 600;
   font-size: 15px;
@@ -215,7 +215,7 @@ body {
   width: 100%;
   max-width: 520px;
   padding: 48px;
-  border-radius: 24px;
+  border-radius: 4px;
   background: rgba(255,255,255,0.08);
   backdrop-filter: blur(24px);
   border: 1px solid rgba(255,255,255,0.15);
@@ -246,7 +246,7 @@ body {
   align-items: center;
   gap: 14px;
   padding: 16px 18px;
-  border-radius: 14px;
+  border-radius: 4px;
   background: rgba(255,255,255,0.06);
   border: 1px solid rgba(255,255,255,0.08);
 }
@@ -318,7 +318,7 @@ body {
   width: 72px;
   height: 72px;
   background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-  border-radius: 18px;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -358,7 +358,7 @@ body {
 .benefit-white-card {
   background: white;
   padding: 36px;
-  border-radius: 16px;
+  border-radius: 4px;
   box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
 }
 
@@ -366,7 +366,7 @@ body {
   width: 56px;
   height: 56px;
   background: #EEF2FF;
-  border-radius: 12px;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -415,7 +415,7 @@ body {
 .btn-create-account,
 .btn-learn-more {
   padding: 15px 36px;
-  border-radius: 10px;
+  border-radius: 4px;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
@@ -497,7 +497,7 @@ body {
   width: 38px;
   height: 38px;
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -631,7 +631,7 @@ body {
 
   .mobile-actions button {
     padding: 12px;
-    border-radius: 8px;
+    border-radius: 4px;
     border: none;
     font-weight: 600;
     cursor: pointer;

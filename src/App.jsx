@@ -19,6 +19,7 @@ import Settings from "./pages/Settings";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import VerifyOtp from "./pages/VerifyOtp";
 import PaymentGateway from "./pages/PaymentGateway";
+import PaymentCallback from "./pages/PaymentCallback";
 
 
 function App() {
@@ -45,6 +46,7 @@ function App() {
         <Route path="/payment-success" element={<PaymentSuccess />} />
         <Route path="/verify-otp" element={<VerifyOtp />} />
         <Route path="/payment-gateway" element={<PaymentGateway />} />
+        <Route path="/payment-callback" element={<PaymentCallback />} />
       </Routes>
     </Router>
   );

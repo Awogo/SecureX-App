@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import logoBlue from "../assets/logo-blue.png";
+import DashboardSidebar from "../components/DashboardSidebar";
 import "../styles/transaction.css";
 import { apiCall } from "../api";
 
@@ -49,34 +49,7 @@ const location = useLocation();
 
   return (
     <div className="transaction-page">
-      {/* Sidebar (Standard) */}
-      <aside className={`transaction-sidebar ${sidebarOpen ? "open" : ""}`}>
-        <div className="sidebar-header">
-          <img src={logoBlue} alt="SecureX" className="sidebar-logo" />
-          <button className="close-sidebar-btn" onClick={() => setSidebarOpen(false)}>✕</button>
-        </div>
-        <nav className="sidebar-nav">
-          <button onClick={() => navigate("/dashboard")}>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/><rect x="11" y="3" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/><rect x="3" y="11" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/><rect x="11" y="11" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/></svg>
-            <span>Dashboard</span>
-          </button>
-          <button className="active" onClick={() => navigate("/transactions")}>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 5H17M3 10H17M3 15H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-            <span>Transactions</span>
-          </button>
-          {/* Other Nav Items... */}
-        </nav>
-        <div className="sidebar-footer">
-          <div className="user-profile">
-            <div className="user-avatar">{getInitials(userData)}</div>
-            <div className="user-info">
-              <p className="user-name">{userData ? `${userData.firstName} ${userData.lastName}` : "Guest"}</p>
-              <p className="user-email">{userData?.email || "..."}</p>
-            </div>
-          </div>
-        </div>
-      </aside>
-      {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
+      <DashboardSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main Content */}
       <main className="transaction-main">

@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import logoBlue from "../assets/logo-blue.png";
 import "../styles/verification.css";
 import { apiCall } from "../api";
+import DashboardSidebar from "../components/DashboardSidebar";
 
 const Verification = () => {
   const navigate = useNavigate();
@@ -110,51 +110,7 @@ const Verification = () => {
 
   return (
     <div className="verification-page">
-      {/* Sidebar */}
-      <aside className={`verification-sidebar ${sidebarOpen ? "open" : ""}`}>
-        <div className="sidebar-header">
-          <img src={logoBlue} alt="SecureX" className="sidebar-logo" />
-          <button className="close-sidebar-btn" onClick={() => setSidebarOpen(false)}>✕</button>
-        </div>
-
-        <nav className="sidebar-nav">
-          <button className="nav-item" onClick={() => navigate("/dashboard")}>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/><rect x="11" y="3" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/><rect x="3" y="11" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/><rect x="11" y="11" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/></svg>
-            <span>Dashboard</span>
-          </button>
-          <button className="nav-item" onClick={() => navigate("/transactions")}>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 5H17M3 10H17M3 15H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-            <span>Transactions</span>
-          </button>
-          <button className="nav-item" onClick={() => navigate("/ai-insights")}>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="1.5"/><path d="M10 6V10L13 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-            <span>AI Insights</span>
-          </button>
-          <button className="nav-item active">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2L4 5V9C4 12.5 7 16 10 17C13 16 16 12.5 16 9V5L10 2Z" stroke="currentColor" strokeWidth="1.5"/><path d="M7 10L9 12L13 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            <span>Verification</span>
-          </button>
-          <button className="nav-item" onClick={() => navigate("/settings")}>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3" stroke="currentColor" strokeWidth="1.5"/><path d="M10 2V4M10 16V18M18 10H16M4 10H2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-            <span>Settings</span>
-          </button>
-        </nav>
-
-        <div className="sidebar-footer">
-          <div className="user-profile">
-            <div className="user-avatar">{getInitials(userData)}</div>
-            <div className="user-info">
-              <p className="user-name">{userData ? `${userData.firstName} ${userData.lastName}` : "Guest"}</p>
-              <p className="user-email">{userData?.email || "..."}</p>
-            </div>
-          </div>
-          <button className="sign-out-btn" onClick={() => { localStorage.removeItem("token"); navigate("/login"); }}>
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M7 13L3 9M3 9L7 5M3 9H11M11 3H13C14.1046 3 15 3.89543 15 5V13C15 14.1046 14.1046 15 13 15H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            <span>Sign Out</span>
-          </button>
-        </div>
-      </aside>
-      {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
+      <DashboardSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main Content */}
       <main className="verification-main">
@@ -187,11 +143,7 @@ const Verification = () => {
                 <div className="score-values">
                   <div className="score-item">
                     <span className="score-label">Current Trust Score</span>
-                    <span className="current-score-big">{userData?.trustScore || 89}</span>
-                  </div>
-                  <div className="score-item">
-                    <span className="score-label">Potential Score</span>
-                    <span className="potential-score-big green">95+</span>
+                    <span className="current-score-big">{userData?.trustScore ?? 0}</span>
                   </div>
                 </div>
               </div>
@@ -276,11 +228,15 @@ const Verification = () => {
               <div className="verified-card">
                 <div className="verified-header">
                   <div className="verified-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#00D9A3"/><path d="M8 12L11 15L16 9" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    {isIdentityComplete ? (
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#00D9A3"/><path d="M8 12L11 15L16 9" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    ) : (
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#E5E7EB"/><path d="M12 8V12M12 16H12.01" stroke="#7A7A7A" strokeWidth="2" strokeLinecap="round"/></svg>
+                    )}
                   </div>
                   <div>
-                    <h3>Identity Verified</h3>
-                    <p>Your identity has been successfully verified on Feb 15, 2024</p>
+                    <h3>{isIdentityComplete ? "Identity Verified" : "Identity Not Verified"}</h3>
+                    <p>{isIdentityComplete ? "Your identity has been successfully verified." : "Complete identity verification to build trust."}</p>
                   </div>
                 </div>
 
@@ -288,33 +244,39 @@ const Verification = () => {
                   <h4>Personal Information</h4>
                   <div className="info-row">
                     <span className="info-label">Full Name</span>
-                    <span className="info-value">{userData ? `${userData.firstName} ${userData.lastName}` : "N/A"}</span>
+                    <span className="info-value">{userData ? `${userData.firstName} ${userData.lastName}` : "—"}</span>
                   </div>
                   <div className="info-row">
-                    <span className="info-label">Date of Birth</span>
-                    <span className="info-value">January 15, 1990</span>
+                    <span className="info-label">Email</span>
+                    <span className="info-value">{userData?.email || "—"}</span>
+                  </div>
+                  <div className="info-row">
+                    <span className="info-label">ID Type</span>
+                    <span className="info-value">{userData?.idType || "—"}</span>
                   </div>
                   <div className="info-row">
                     <span className="info-label">ID Number</span>
-                    <span className="info-value">{userData?.idNumber || "N/A"}</span>
+                    <span className="info-value">{userData?.idNumber || "—"}</span>
                   </div>
                 </div>
 
-                <div className="info-section">
-                  <h4>Verified Documents</h4>
-                  <div className="document-item">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#D1FAE5"/><path d="M5 8L7 10L11 6" stroke="#00D9A3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    <span>National ID Card (Front)</span>
+                {isPaymentComplete && (
+                  <div className="info-section">
+                    <h4>Payment Method</h4>
+                    <div className="info-row">
+                      <span className="info-label">Bank</span>
+                      <span className="info-value">{userData?.bankName || "—"}</span>
+                    </div>
+                    <div className="info-row">
+                      <span className="info-label">Account Number</span>
+                      <span className="info-value">{userData?.accountNumber || "—"}</span>
+                    </div>
+                    <div className="info-row">
+                      <span className="info-label">Account Name</span>
+                      <span className="info-value">{userData?.accountName || "—"}</span>
+                    </div>
                   </div>
-                  <div className="document-item">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#D1FAE5"/><path d="M5 8L7 10L11 6" stroke="#00D9A3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    <span>National ID Card (Back)</span>
-                  </div>
-                  <div className="document-item">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#D1FAE5"/><path d="M5 8L7 10L11 6" stroke="#00D9A3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    <span>Selfie Verification</span>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
 

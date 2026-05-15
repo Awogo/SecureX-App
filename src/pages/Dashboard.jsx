@@ -1,13 +1,18 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import logoBlue from "../assets/logo-blue.png";
 import "../styles/dashboard.css";
-import { apiCall } from "../api"; 
+import { apiCall } from "../api";
+import DashboardSidebar from "../components/DashboardSidebar";
+import {
+  DocumentTextIcon,
+  ShieldCheckIcon,
+  SparklesIcon,
+  ChevronRightIcon,
+} from "@heroicons/react/24/outline";
 
 const Dashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
-  const [activeNav, setActiveNav] = useState("dashboard");
   
   // States for Data
   // --- STATE ---
@@ -56,8 +61,10 @@ useEffect(() => {
       setUserData(normalizedUser);
 
       // 🔥 FETCH DASHBOARD STATS
-      const statsData = await apiCall(`/api/dashboard/${normalizedUser.id}`, "GET");
-      setDashboardStats(statsData.data || statsData);
+      if (normalizedUser.id) {
+        const statsData = await apiCall(`/api/dashboard/${normalizedUser.id}`, "GET");
+        setDashboardStats(statsData.data || statsData);
+      }
 
     } catch (error) {
       console.error("Dashboard Error:", error);
@@ -79,127 +86,108 @@ useEffect(() => {
 
   // --- PREPARE STATS DATA ---
   const trustScore = dashboardStats?.trustScore || 0;
+
+  const formatCurrency = (amount) => {
+    if (!amount && amount !== 0) return "₦0";
+    return `₦${Number(amount).toLocaleString("en-NG")}`;
+  };
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "";
+    return new Date(dateStr).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" });
+  };
+
+  const recentTransactions = dashboardStats?.recentTransactions || [];
+
+  const completionRate = dashboardStats?.totalTransactions
+    ? Math.round((dashboardStats.completedTransactions / dashboardStats.totalTransactions) * 100)
+    : 0;
+
   const stats = [
-    { 
-      label: "Today's Sale", 
-      value: dashboardStats?.todaysSale || "₦0", 
-      change: dashboardStats?.saleChange || "+0%", 
-      positive: true 
+    {
+      label: "Total Revenue",
+      value: formatCurrency(dashboardStats?.totalRevenue),
+      change: `${dashboardStats?.completedTransactions || 0} completed`,
+      positive: true,
     },
-    { 
-      label: "This Week", 
-      value: dashboardStats?.weeklySale || "₦0", 
-      change: dashboardStats?.weeklyChange || "+0%", 
-      positive: true 
+    {
+      label: "Total Transactions",
+      value: String(dashboardStats?.totalTransactions || 0),
+      change: `${dashboardStats?.pendingTransactions || 0} pending`,
+      positive: true,
     },
-    { 
-      label: "Escrow Held", 
-      value: dashboardStats?.escrowHeld || "₦0", 
-      badge: "Secured", 
-      positive: true 
+    {
+      label: "In Escrow",
+      value: String(dashboardStats?.pendingTransactions || 0),
+      badge: "Secured",
+      positive: true,
     },
-    { 
-      label: "Total Transaction", 
-      value: dashboardStats?.totalTransaction || "₦0", 
-      change: dashboardStats?.totalChange || "+0%", 
-      positive: true 
+    {
+      label: "Completed",
+      value: String(dashboardStats?.completedTransactions || 0),
+      change: `${completionRate}% rate`,
+      positive: true,
     },
   ];
 
   // --- QUICK ACTIONS DATA ---
   const quickActions = [
-    { 
-      title: "Create Listing", 
-      subtitle: "Post a new item", 
-      icon: "📝", 
-      color: "#E8F4F8", 
-      route: "/create-listing" 
+    {
+      title: "Create SafePay link",
+      subtitle: "Generate a unique payment URL",
+      icon: <DocumentTextIcon style={{ width: 18, height: 18 }} />,
+      iconColor: "var(--indigo-600)",
+      route: "/create-transaction",
     },
-    { 
-      title: "Verify Identity", 
-      subtitle: "Complete verification", 
-      icon: "✓", 
-      color: "#F0F8E8", 
-      route: "/verification" 
+    {
+      title: "Verify identity",
+      subtitle: "Upload your government ID",
+      icon: <ShieldCheckIcon style={{ width: 18, height: 18 }} />,
+      iconColor: "var(--mint-600)",
+      route: "/verification",
     },
-    { 
-      title: "Withdraw Funds", 
-      subtitle: "Withdraw to bank", 
-      icon: "💰", 
-      color: "#F8F0E8", 
-      route: "/withdraw" 
+    {
+      title: "AI Insights",
+      subtitle: "View smart recommendations",
+      icon: <SparklesIcon style={{ width: 18, height: 18 }} />,
+      iconColor: "#F59E0B",
+      route: "/ai-insights",
     },
   ];
+
+  // --- CHART DATA ---
+  const completed = dashboardStats?.completedTransactions || 0;
+  const pending = dashboardStats?.pendingTransactions || 0;
+  const totalTxns = dashboardStats?.totalTransactions || 0;
+  const otherCount = Math.max(0, totalTxns - completed - pending);
+
+  // Polyline: oldest → newest, map amounts to SVG coords (viewBox 0 0 400 200)
+  const chartTransactions = [...recentTransactions].reverse();
+  const maxAmount = Math.max(...chartTransactions.map((t) => t.amount || 0), 1);
+  const staticPoints = "0,150 50,140 100,120 150,130 200,110 250,100 300,80 350,70 400,60";
+  const linePoints = chartTransactions.length > 1
+    ? chartTransactions.map((t, i) => {
+        const x = Math.round((i / (chartTransactions.length - 1)) * 400);
+        const y = Math.round(180 - ((t.amount || 0) / maxAmount) * 160);
+        return `${x},${y}`;
+      }).join(" ")
+    : chartTransactions.length === 1
+      ? `0,${Math.round(180 - ((chartTransactions[0].amount || 0) / maxAmount) * 160)} 400,${Math.round(180 - ((chartTransactions[0].amount || 0) / maxAmount) * 160)}`
+      : staticPoints;
+  const fillPoints = linePoints + " 400,200 0,200";
+
+  // Pie (donut r=80, circumference≈502)
+  const C = 502;
+  const completedLen = totalTxns > 0 ? (completed / totalTxns) * C : 0;
+  const pendingLen   = totalTxns > 0 ? (pending   / totalTxns) * C : 0;
+  const otherLen     = totalTxns > 0 ? (otherCount / totalTxns) * C : 0;
+  const completedPct = totalTxns > 0 ? Math.round((completed  / totalTxns) * 100) : 0;
+  const pendingPct   = totalTxns > 0 ? Math.round((pending    / totalTxns) * 100) : 0;
+  const otherPct     = totalTxns > 0 ? 100 - completedPct - pendingPct : 0;
   // --- RENDER ---
   return (
     <div className="dashboard-page">
-      {/* Sidebar */}
-      <aside className={`dashboard-sidebar ${sidebarOpen ? "open" : ""}`}>
-        <div className="sidebar-header">
-          <img src={logoBlue} alt="SecureX" className="sidebar-logo" />
-          <button className="close-sidebar-btn" onClick={() => setSidebarOpen(false)}>✕</button>
-        </div>
-
-        <nav className="sidebar-nav">
-          <button className={`nav-item ${activeNav === "dashboard" ? "active" : ""}`} onClick={() => setActiveNav("dashboard")}>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <rect x="3" y="3" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
-              <rect x="11" y="3" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
-              <rect x="3" y="11" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
-              <rect x="11" y="11" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
-            </svg>
-            <span>Dashboard</span>
-          </button>
-
-          <button className={`nav-item ${activeNav === "transactions" ? "active" : ""}`}
-           onClick={() => { setActiveNav("transactions"); navigate("/transactions"); }}>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M3 5H17M3 10H17M3 15H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
-            <span>Transactions</span>
-          </button>
-
-          <button 
-          className={`nav-item ${activeNav === "ai" ? "active" : ""}`} 
-          onClick={() => { setActiveNav("ai"); navigate("/ai-insights"); }}>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="1.5"/>
-              <path d="M10 6V10L13 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
-            <span>AI Insights</span>
-          </button>
-
-          <button className={`nav-item ${activeNav === "verification" ? "active" : ""}`} onClick={() => { setActiveNav("verification"); navigate("/verification"); }}>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2L4 5V9C4 12.5 7 16 10 17C13 16 16 12.5 16 9V5L10 2Z" stroke="currentColor" strokeWidth="1.5"/><path d="M7 10L9 12L13 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            <span>Verification</span>
-          </button>
-
-          <button className={`nav-item ${activeNav === "settings" ? "active" : ""}`} onClick={() => { setActiveNav("settings"); navigate("/settings"); }}>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3" stroke="currentColor" strokeWidth="1.5"/><path d="M10 2V4M10 16V18M18 10H16M4 10H2M15.66 4.34L14.24 5.76M5.76 14.24L4.34 15.66M15.66 15.66L14.24 14.24M5.76 5.76L4.34 4.34" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-            <span>Settings</span>
-          </button>
-        </nav>
-
-        <div className="sidebar-footer">
-          <div className="user-profile">
-            <div className="user-avatar">{getInitials(userData)}</div>
-            <div className="user-info">
-             <p className="user-name"> {userData ? `${userData.firstName} ${userData.lastName}` : "Guest"}</p>
-              <p className="user-email">{userData?.email || "..."}</p>
-            </div>
-          </div>
-          <button className="sign-out-btn" onClick={() => {
-            localStorage.removeItem("token");
-            navigate("/login");
-          }}>
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <path d="M7 13L3 9M3 9L7 5M3 9H11M11 3H13C14.1046 3 15 3.89543 15 5V13C15 14.1046 14.1046 15 13 15H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            <span>Sign Out</span>
-          </button>
-        </div>
-      </aside>
-      {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
+      <DashboardSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main Content */}
       <main className="dashboard-main">
@@ -217,7 +205,7 @@ useEffect(() => {
               <span className="notification-badge">2</span>
             </button>
             <button className="user-btn">
-              <div className="user-avatar-small">{getInitials`${userData?.firstName || ""} ${userData?.lastName || ""}`}</div>
+              <div className="user-avatar-small">{getInitials(userData)}</div>
             </button>
           </div>
         </header>
@@ -238,19 +226,36 @@ useEffect(() => {
                 <div className="trust-score-card">
                   <div className="score-content">
                     <h2>Your Trust Score</h2>
-                    <div className="score-badge">
-                      <span className="score-label">Excellent</span>
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 8L7 11L12 5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    </div>
-                    <p className="score-subtitle">Top 15% of sellers</p>
-                    <button className="view-details-btn">View Details</button>
+                    {trustScore > 0 ? (
+                      <>
+                        <div className="score-badge">
+                          <span className="score-label">
+                            {trustScore >= 80 ? "Excellent" : trustScore >= 60 ? "Good" : trustScore >= 40 ? "Fair" : "Building"}
+                          </span>
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 8L7 11L12 5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        </div>
+                        <p className="score-subtitle">Based on your transaction history</p>
+                      </>
+                    ) : (
+                      <>
+                        <div className="score-badge" style={{ background: "rgba(255,255,255,0.15)" }}>
+                          <span className="score-label">Not yet scored</span>
+                        </div>
+                        <p className="score-subtitle">Complete transactions to build your score</p>
+                      </>
+                    )}
+                    <button className="view-details-btn" onClick={() => navigate("/verification")}>
+                      {trustScore > 0 ? "View Details" : "Get Verified"}
+                    </button>
                   </div>
                   <div className="score-circle">
                     <svg width="160" height="160" viewBox="0 0 160 160">
                       <circle cx="80" cy="80" r="70" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="12"/>
-                      <circle cx="80" cy="80" r="70" fill="none" stroke="white" strokeWidth="12" strokeDasharray="440" strokeDashoffset={440 - (440 * trustScore / 100)} strokeLinecap="round" transform="rotate(-90 80 80)"/>
+                      <circle cx="80" cy="80" r="70" fill="none" stroke="white" strokeWidth="12" strokeDasharray="440"
+                        strokeDashoffset={trustScore > 0 ? 440 - (440 * trustScore / 100) : 440}
+                        strokeLinecap="round" transform="rotate(-90 80 80)"/>
                     </svg>
-                    <div className="score-number">{dashboardStats?.trustScore || 0}</div>
+                    <div className="score-number">{trustScore > 0 ? trustScore : "--"}</div>
                   </div>
                 </div>
 
@@ -278,16 +283,90 @@ useEffect(() => {
 
                 {/* Quick Actions */}
                 <div className="card">
-                  <h3>Quick Actions</h3>
-                  <div className="actions-grid">
+                  <h3 style={{ marginTop: 0, marginBottom: 16 }}>Quick actions</h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     {quickActions.map((action, index) => (
-                      <div key={index} className="action-card" style={{ background: action.color }} onClick={() => navigate(action.route)}>
-                        <div className="action-icon">{action.icon}</div>
-                        <h4>{action.title}</h4>
-                        <p>{action.subtitle}</p>
+                      <div
+                        key={index}
+                        className="action-card"
+                        onClick={() => navigate(action.route)}
+                      >
+                        <div
+                          className="action-icon"
+                          style={{ color: action.iconColor }}
+                        >
+                          {action.icon}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <h4>{action.title}</h4>
+                          <p>{action.subtitle}</p>
+                        </div>
+                        <ChevronRightIcon
+                          className="action-card-arrow"
+                          style={{ width: 16, height: 16, color: 'var(--ink-300)' }}
+                        />
                       </div>
                     ))}
                   </div>
+                </div>
+
+                {/* Recent Transactions */}
+                <div className="card" style={{ padding: 24 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                    <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "#1E1E1E" }}>Recent Transactions</h3>
+                    <button
+                      onClick={() => navigate("/transactions")}
+                      style={{ background: "none", border: "none", color: "var(--indigo-600)", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+                    >
+                      View all
+                    </button>
+                  </div>
+                  {recentTransactions.length === 0 ? (
+                    <p style={{ textAlign: "center", color: "#7A7A7A", fontSize: 14, padding: "24px 0", margin: 0 }}>
+                      No transactions yet. Create your first SafePay link to get started.
+                    </p>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column" }}>
+                      {recentTransactions.map((txn, i) => (
+                        <div
+                          key={txn.id || i}
+                          style={{
+                            display: "flex", alignItems: "center", gap: 12, padding: "12px 0",
+                            borderBottom: i < recentTransactions.length - 1 ? "1px solid #F0F0F0" : "none",
+                          }}
+                        >
+                          <div style={{
+                            width: 36, height: 36, borderRadius: "50%", flexShrink: 0,
+                            background: txn.status === "completed" ? "#D1FAE5" : txn.status === "disputed" ? "#FEE2E2" : "#EEF2FF",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                          }}>
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                              {txn.status === "completed"
+                                ? <path d="M3 8L6 11L13 4" stroke="#00D9A3" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                : <path d="M8 4V8L10.5 10.5" stroke={txn.status === "disputed" ? "#EF4444" : "#4A5CF5"} strokeWidth="1.5" strokeLinecap="round"/>
+                              }
+                            </svg>
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "#1E1E1E", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                              {txn.description || txn.itemName || "Transaction"}
+                            </p>
+                            <p style={{ margin: 0, fontSize: 12, color: "#7A7A7A" }}>{formatDate(txn.createdAt)}</p>
+                          </div>
+                          <div style={{ textAlign: "right", flexShrink: 0 }}>
+                            <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "#1E1E1E" }}>{formatCurrency(txn.amount)}</p>
+                            <span style={{
+                              fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 4,
+                              background: txn.status === "completed" ? "#D1FAE5" : txn.status === "disputed" ? "#FEE2E2" : "#EEF2FF",
+                              color: txn.status === "completed" ? "#00D9A3" : txn.status === "disputed" ? "#EF4444" : "#4A5CF5",
+                            }}>
+                              {txn.status}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -298,55 +377,58 @@ useEffect(() => {
                   <h3>Transaction Trends</h3>
                   <div className="chart-placeholder">
                     <svg width="100%" height="200" viewBox="0 0 400 200">
-                      <polyline points="0,150 50,140 100,120 150,130 200,110 250,100 300,80 350,70 400,60" 
-                        fill="none" stroke="#00D9A3" strokeWidth="2"/>
-                      <polyline points="0,150 50,140 100,120 150,130 200,110 250,100 300,80 350,70 400,60 400,200 0,200" 
-                        fill="url(#gradient)" opacity="0.2"/>
                       <defs>
-                        <linearGradient id="gradient" x1="0%" y1="0" x2="0%" y2="100%">
+                        <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
                           <stop offset="0%" stopColor="#00D9A3" stopOpacity="0.3"/>
                           <stop offset="100%" stopColor="#00D9A3" stopOpacity="0"/>
                         </linearGradient>
                       </defs>
+                      <polyline points={linePoints} fill="none" stroke="#00D9A3" strokeWidth="2"/>
+                      <polyline points={fillPoints} fill="url(#gradient)" opacity="0.2"/>
                     </svg>
                   </div>
                   <div className="chart-legend">
                     <div className="legend-item">
                       <span className="legend-dot transactions"></span>
-                      <span>Transactions</span>
-                    </div>
-                    <div className="legend-item">
-                      <span className="legend-dot amount"></span>
-                      <span>Amount (₦)</span>
+                      <span>{chartTransactions.length > 0 ? "Amount (₦)" : "Amount (₦)"}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Escrow Payment Distribution */}
                 <div className="chart-card">
-                  <h3>Escrow Payment Distribution</h3>
+                  <h3>Transaction Breakdown</h3>
                   <div className="pie-chart">
                     <svg width="200" height="200" viewBox="0 0 200 200">
-                      <circle cx="100" cy="100" r="80" fill="none" stroke="#4A5CF5" strokeWidth="40" strokeDasharray="251 502"/>
-                      <circle cx="100" cy="100" r="80" fill="none" stroke="#00D9A3" strokeWidth="40" strokeDasharray="188 502" strokeDashoffset="-251" transform="rotate(0 100 100)"/>
-                      <circle cx="100" cy="100" r="80" fill="none" stroke="#2C36A2" strokeWidth="40" strokeDasharray="63 502" strokeDashoffset="-439"/>
+                      {totalTxns > 0 ? (
+                        <>
+                          <circle cx="100" cy="100" r="80" fill="none" stroke="#00D9A3" strokeWidth="40"
+                            strokeDasharray={`${completedLen} ${C}`} strokeDashoffset="0"/>
+                          <circle cx="100" cy="100" r="80" fill="none" stroke="#4A5CF5" strokeWidth="40"
+                            strokeDasharray={`${pendingLen} ${C}`} strokeDashoffset={-completedLen}/>
+                          <circle cx="100" cy="100" r="80" fill="none" stroke="#2C36A2" strokeWidth="40"
+                            strokeDasharray={`${otherLen} ${C}`} strokeDashoffset={-(completedLen + pendingLen)}/>
+                        </>
+                      ) : (
+                        <circle cx="100" cy="100" r="80" fill="none" stroke="#E5E7EB" strokeWidth="40" strokeDasharray={`${C} ${C}`}/>
+                      )}
                     </svg>
                     <div className="pie-legend">
                       <div className="pie-legend-item">
-                        <span className="pie-dot" style={{ background: "#4A5CF5" }}></span>
-                        <span>Crypto: 20%</span>
+                        <span className="pie-dot" style={{ background: "#00D9A3" }}></span>
+                        <span>Completed: {completedPct}%</span>
                       </div>
                       <div className="pie-legend-item">
-                        <span className="pie-dot" style={{ background: "#00D9A3" }}></span>
-                        <span>Bank Transfer: 35%</span>
+                        <span className="pie-dot" style={{ background: "#4A5CF5" }}></span>
+                        <span>In Escrow: {pendingPct}%</span>
                       </div>
                       <div className="pie-legend-item">
                         <span className="pie-dot" style={{ background: "#2C36A2" }}></span>
-                        <span>Cash: 45%</span>
+                        <span>Disputed: {otherPct}%</span>
                       </div>
                     </div>
                   </div>
-                  <button className="see-more-btn">See More</button>
+                  <button className="see-more-btn" onClick={() => navigate("/transactions")}>View All Transactions</button>
                 </div>
               </div>
             </div>

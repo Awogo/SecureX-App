@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { redirect, useNavigate } from "react-router-dom";
-import logoBlue from "../assets/logo-blue.png";
 import "../styles/transaction.css";
 import { apiCall } from "../api";
+import DashboardSidebar from "../components/DashboardSidebar";
 
 const CreateTransaction = () => {
   const navigate = useNavigate();
@@ -82,54 +82,51 @@ const CreateTransaction = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // --- FINAL SUBMISSION LOGIC ---
-   // --- FINAL SUBMISSION LOGIC (FIXED) ---
-  // --- FINAL SUBMISSION LOGIC (WITH FALLBACK) ---
-  // --- FINAL SUBMISSION LOGIC (DIRECT TO ESCROW) ---
   const handleConfirmTransaction = async () => {
     setIsSubmitting(true);
     try {
-      // 1. Prepare Payload
+      // 1. Create the transaction record
       const payload = {
         item: formData.item,
         description: formData.description || "Escrow Transaction",
         amount: Number(formData.amount),
-        currency: "NGN", 
+        currency: "NGN",
         transactionType: formData.transactionType,
         otherPartyEmail: formData.otherPartyEmail,
         otherPartyPhone: formData.otherPartyPhone || "",
         setDeliveryDays: Number(formData.setDeliveryDays) || 2,
       };
 
-      // Attach Creator ID
-      if (formData.transactionType === 'sell') {
-          payload.sellerId = userData.id; 
+      if (formData.transactionType === "sell") {
+        payload.sellerId = userData.id;
       } else {
-          payload.buyerId = userData.id;
+        payload.buyerId = userData.id;
       }
 
-      console.log("Creating Transaction:", payload);
-
-      // 2. Call Create Transaction API
       const txnRes = await apiCall("/api/transactions", "POST", payload);
-      
       const txnData = txnRes.data || txnRes.transaction || txnRes;
       const txnId = txnData.id || txnData._id || txnData.reference;
-      
+
       if (!txnId) throw new Error("Transaction ID missing.");
       setCreatedTxnId(txnId);
 
-      // 3. SUCCESS: Navigate directly to Payment Success
-      // We pass the details so the next pages can display them
-      navigate("/payment-success", { 
-        state: { 
+      // 2. If the user is the buyer, initiate Paystack payment
+      if (formData.transactionType === "buy") {
+        const payRes = await apiCall("/api/payment/initialize", "POST", {
+          amount: Number(formData.amount),
           transactionId: txnId,
-          amount: formData.amount,
-          item: formData.item,
-          buyerEmail: formData.otherPartyEmail
-        } 
-      });
+        });
 
+        const payUrl = payRes.data?.url;
+        if (!payUrl) throw new Error("Could not get payment link.");
+
+        // Redirect to Paystack hosted checkout page
+        window.location.href = payUrl;
+        return;
+      }
+
+      // 3. Seller: show the success step (buyer will pay when they accept)
+      setCurrentStep(6);
     } catch (err) {
       console.error("Transaction Error:", err);
       alert(err.message || "Failed to create transaction");
@@ -141,49 +138,7 @@ const CreateTransaction = () => {
 
   return (
     <div className="transaction-page">
-      {/* Sidebar */}
-      <aside className="transaction-sidebar">
-        <div className="sidebar-header">
-          <img src={logoBlue} alt="SecureX" className="sidebar-logo" />
-        </div>
-
-        <nav className="sidebar-nav">
-          <button onClick={() => navigate("/dashboard")}>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/><rect x="11" y="3" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/><rect x="3" y="11" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/><rect x="11" y="11" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/></svg>
-            <span>Dashboard</span>
-          </button>
-
-          <button className="active" onClick={() => navigate("/transactions")}>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 5H17M3 10H17M3 15H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-            <span>Transactions</span>
-          </button>
-
-          <button onClick={() => navigate("/ai-insights")}>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="1.5"/><path d="M10 6V10L13 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-            <span>AI Insights</span>
-          </button>
-
-          <button onClick={() => navigate("/verification")}>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2L4 5V9C4 12.5 7 16 10 17C13 16 16 12.5 16 9V5L10 2Z" stroke="currentColor" strokeWidth="1.5"/><path d="M7 10L9 12L13 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            <span>Verification</span>
-          </button>
-
-          <button onClick={() => navigate("/settings")}>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3" stroke="currentColor" strokeWidth="1.5"/><path d="M10 2V4M10 16V18M18 10H16M4 10H2M15.66 4.34L14.24 5.76M5.76 14.24L4.34 15.66M15.66 15.66L14.24 14.24M5.76 5.76L4.34 4.34" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-            <span>Settings</span>
-          </button>
-        </nav>
-
-        <div className="sidebar-footer">
-          <div className="user-profile">
-            <div className="user-avatar">{getInitials(userData)}</div>
-            <div className="user-info">
-              <p className="user-name">{userData ? `${userData.firstName} ${userData.lastName}` : "Guest"}</p>
-              <p className="user-email">{userData?.email || "..."}</p>
-            </div>
-          </div>
-        </div>
-      </aside>
+      <DashboardSidebar />
 
       {/* Main Content */}
       <main className="transaction-main">
@@ -258,7 +213,7 @@ const CreateTransaction = () => {
           {/* Step 3: Item & Amount */}
           {currentStep === 3 && (
             <div className="form-step">
-              <h2>Transaction Details</h2>
+              <h2>{formData.transactionType === 'sell' ? "What are you selling?" : "What are you buying?"}</h2>
               
               <div className="transaction-form-group">
                 <label>Item Name</label>

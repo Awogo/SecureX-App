@@ -1,4 +1,4 @@
-/* payment.css */
+﻿/* payment.css */
 
 .payment-gateway-page {
   min-height: 100vh;
@@ -14,7 +14,7 @@
   width: 100%;
   max-width: 450px;
   background: white;
-  border-radius: 24px;
+  border-radius: 4px;
   padding: 40px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
   text-align: center;
@@ -39,7 +39,7 @@
 
 .gateway-summary {
   background: #F6F7FB;
-  border-radius: 12px;
+  border-radius: 4px;
   padding: 20px;
   margin-bottom: 32px;
 }
@@ -79,7 +79,7 @@
   align-items: center;
   padding: 16px;
   border: 2px solid #E5E7EB;
-  border-radius: 12px;
+  border-radius: 4px;
   margin-bottom: 12px;
   cursor: pointer;
   transition: all 0.2s;
@@ -103,7 +103,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
+  border-radius: 4px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
@@ -132,7 +132,7 @@
   background: #00D9A3;
   color: white;
   border: none;
-  border-radius: 12px;
+  border-radius: 4px;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;

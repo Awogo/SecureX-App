@@ -117,7 +117,7 @@ const VerifyEmail = () => {
 
         {/* Error & Success Messages */}
         {error && <div className="auth-error">{error}</div>}
-        {successMsg && <div className="auth-success" style={{ background: '#d1fae5', color: '#065f46', padding: '10px', borderRadius: '5px', marginBottom: '10px', textAlign: 'center' }}>{successMsg}</div>}
+        {successMsg && <div className="auth-success" style={{ background: '#d1fae5', color: '#065f46', padding: '10px', borderRadius: '4px', marginBottom: '10px', textAlign: 'center' }}>{successMsg}</div>}
 
     <div  className="auth-card">
         {/* Form */}

@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(python3 -c ' *)",
+      "Bash(node -e ' *)",
+      "Bash(ls \"c:\\\\Users\\\\Okonk\\\\OneDrive\\\\Desktop\\\\BUBBLE BARREL\\\\Collaborations\\\\SecureX Design System\\\\\")",
+      "Read(//c/Users/Okonk/OneDrive/Desktop/BUBBLE BARREL/Collaborations/**)"
+    ]
+  }
+}

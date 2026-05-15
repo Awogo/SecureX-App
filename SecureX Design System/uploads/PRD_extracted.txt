@@ -1,0 +1,755 @@
+PRODUCT REQUIREMENT DOCUMENT FOR SECUREX
+
+Project Title: SecureX – Secure Transaction &amp; Business Intelligence Platform for Africa SMEs.
+
+Project Team Number: 60.
+
+Industry/Sector: FinTech / Digital Commerce Infrastructure.
+
+Project Type: WTF Capstone Project – (Functional Prototype).
+
+Status: In Progress
+
+Version: 1.0 (MVP Scope Definition)
+
+Timeline: 3 Weeks.
+
+Prepare By:  Ohale Silver Chioma.
+
+Role: Product Manager.
+
+Assigned Sustainable Development Goal (SDG): SDG 9 – Industry, Innovation, and Infrastructure.
+
+1. Product Overview
+
+SecureX is an integrated FinTech prototype designed to enable safe, trusted, and transparent transactions between African SMEs and their customers. The platform combines smart escrow payment protection, trust scoring, and automated transaction records to address the dual challenge of transaction distrust and poor business management in Africa’s informal and semi-formal economy.
+
+SecureX is built as a Progressive Web Application (PWA) and demonstrates how secure transaction infrastructure can support SME growth, financial inclusion, and cross-border trade within Africa.
+
+This project delivers a functional prototype for demonstration and evaluation purposes and does not process real financial transactions.
+
+2. Problem Statement
+
+Currently, African SME owners, traders, and their customers struggle with unsafe and non-transparent buying and selling transactions, coupled with inefficient financial record-keeping and limited business intelligence capabilities. This dual challenge leads to lost revenue, customer distrust, fraud incidents, poor cash flow management, and restricted access to growth opportunities.
+
+African SMEs face two critical and interrelated challenges:
+
+Lack of transaction trust between buyers and sellers, especially during first-time, high-value, or cross-border transactions. Buyers fear fraud and non-delivery, while sellers fear non-payment and disputes.
+
+Inefficient financial record-keeping, with over 70% of SMEs relying on paper or memory-based tracking, leading to poor financial visibility and limited access to credit.
+
+These challenges result in:
+
+Lost sales and abandoned transactions.
+
+Fraud incidents and disputes.
+
+Poor cash flow management.
+
+Inability to access loans or formal financial services.
+
+This problem occurs daily across physical markets, online channels, and informal trade networks throughout Africa.
+
+3. Product Goals &amp; Objectives
+
+Primary Goals
+
+Increase trust between buyers and sellers.
+
+Reduce fraud and transaction disputes.
+
+Automate financial record-keeping for SMEs.
+
+Enable verifiable transaction history for future credit access.
+
+Secondary Goals
+
+Encourage cross-border SME transactions.
+
+Reduce time spent on manual record-keeping.
+
+Support SME scalability and sustainability.
+
+Success Metrics (Prototype-Level)
+
+Successful completion of simulated escrow transactions.
+
+Clear visibility of transaction history on dashboard.
+
+Positive user feedback from validation surveys.
+
+Demonstrated reduction in trust-related transaction hesitation.
+
+4. Target Users
+
+Primary Users: SME Sellers
+
+Small business owners, traders, and service providers
+
+Operate in urban and semi-urban African markets
+
+Business size: 1–15 employees
+
+Limited access to formal financial tools
+
+Secondary Users: Buyers/Consumers
+
+Individuals purchasing from SMEs.
+
+Often hesitant to transact with unfamiliar sellers.
+
+Need payment protection and dispute recourse.
+
+Tertiary Stakeholders
+
+Financial institutions.
+
+Market associations.
+
+Logistics partners.
+
+Regulators (conceptual level).
+
+5. CORE FEATURES OF SECUREX               
+
+IN SCOPE (MVP FEATURES)
+
+User Registration &amp; Authentication
+
+Register with personal/business email/password.
+
+Register with a valid phone number and identification card.
+
+SafePay Smart Escrow (Simulated)
+
+Buyer payments are held securely until delivery is confirmed.
+
+Conditional release of funds based on agreed rules.
+
+TrustScore System (AI-powered trust scoring (0-100))
+
+Reputation score based on transaction completion, ratings and dispute history.
+
+Displayed to buyers before transactions.
+
+ Digital Identity Verification: 
+
+Email verification (mandatory).
+
+Government ID (optional, increases limits).
+
+Business registration integration.
+
+Market association verification.
+
+OTP Proof of Delivery
+
+Unique transaction code generated.
+
+Buyer confirms delivery using OTP to trigger fund release.
+
+Basic Business Dashboard(Automated Transaction Recording)
+
+Every transaction creates a digital receipt.
+
+Records categorized automatically.
+
+Transaction history documented.
+
+Revenue visibility.
+
+Simple insights.
+
+AI Predictive Intelligence:
+
+ inventory optimization 
+
+smart recommendations.
+
+      8.    Multi-Platform Access: 
+
+Progressive Web App.
+
+SMS/USSD for button phones.
+
+6. User Stories
+
+Buyer Trust:
+
+As a buyer, I want my payment held securely until I confirm delivery so that I do not lose my money when buying from a new seller.
+
+Seller Protection:
+
+As a seller, I want assurance that payment has been made before I deliver goods so that I am protected from non-payment.
+
+Transaction Records:
+
+As a business owner, I want every transaction recorded automatically so that I can track my sales and expenses easily.
+
+Reputation Visibility:
+
+As a buyer, I want to see a seller’s trust score so that I can decide whether to transact with confidence.
+
+7. Persona
+
+Primary Persona: Informal Digital Seller
+
+Name: Chinedu
+ Age: 27
+ Business: Instagram gadget reseller
+ Problem:
+
+Buyers don’t trust him.
+
+Experiences payment reversals
+
+No structured proof of legitimacy.
+
+Goal:
+
+Appear credible.
+
+Secure payments before shipping.
+
+Reduce fraud losses.
+
+Secondary Persona: Online Buyer
+
+Name: Aisha
+ Age: 23
+ Problem:
+
+Fear of being scammed.
+
+No identity transparency.
+
+No protection after transfer.
+
+Goal:
+
+Verify seller credibility
+
+Secure refund path
+
+Safe transaction confirmation
+
+8. Use Cases and Acceptance Criteria
+
+A transaction shall be considered successful when the buyer’s payment is held in escrow, the seller delivers the product or service, the buyer confirms receipt using a unique OTP within the defined timeframe, and the system automatically releases the funds to the seller.
+
+1. User Registration &amp; Authentication:
+
+Use Case:
+
+User:Buyer, 
+
+Scenario:
+
+New User:
+
+The user opens SecureX PWA.
+
+The user selects Register if a new user and registers with Email,phone no, government ID address and Password.
+
+The system sends OTP to authenticate the user.
+
+The user enters OTP signs into the app using their email/username and password..
+
+User selects role (Buyer or Seller).
+
+The user gains access to the dashboard.
+
+Existing User:
+
+The user opens SecureX PWA.
+
+The user selects Login if it is an existing user, input email/username and password to gain access to the dashboard.
+
+User selects role (Buyer or Seller). The user gains access to the dashboard.
+
+For a buyer, the system will send an OTP when a transaction is initiated (after inputting transaction details).
+
+Acceptance Criteria
+
+Users must register with a valid phone number,email and password.
+
+OTP verification must be successful before account creation.
+
+Users must be able to log in and log out securely.
+
+The system must differentiate buyer and seller roles.
+
+2. Smart Escrow (SafePay)
+
+Use Case: 
+
+User: Buyer
+Scenario:
+
+Buyer selects a product or service.
+
+Buyer initiates payment.
+
+Funds are held in escrow.
+
+Seller delivers goods.
+
+Buyer confirms delivery.
+
+Funds are released to the seller.
+
+Acceptance Criteria
+
+Payment must not be released before delivery confirmation.
+
+Escrow status must be visible to both parties.
+
+Auto-release must occur after the defined timeframe if the buyer is inactive.
+
+3. TrustScore™ System
+
+Use Case: 
+
+User: Buyer
+Scenario:
+
+The buyer views the seller profile.
+
+The buyer checks TrustScore and transaction history.
+
+The buyer decides whether to proceed.
+
+Acceptance Criteria
+
+TrustScore must be displayed on the seller profile.
+
+TrustScore must update after each transaction.
+
+Higher scores must reflect better transaction history.
+
+4. Digital Identity Verification
+
+Use Case
+
+    User: Seller
+Scenario:
+
+Seller navigates to profile settings.
+
+Seller uploads government ID.
+
+System reviews verification status.
+
+TrustScore increases upon verification.
+
+Acceptance Criteria
+
+Email verification is mandatory.
+
+Government ID upload is compulsory but visible on profile.
+
+Verified sellers must show a higher TrustScore.
+
+5. OTP-Based Proof of Delivery
+
+Use Case
+
+User: Buyer
+Scenario:
+
+The system must generate OTP upon delivery.
+
+The buyer must receive OTP.
+
+The buyer  must enter OTP.
+
+The system confirms delivery and releases funds.
+
+Acceptance Criteria
+
+OTP must be unique per transaction.
+
+OTP must expire after use.
+
+Funds must only be released after a valid OTP entry.
+
+ 
+
+6. Business Dashboard (Automated Transaction Records)
+
+Use Case
+
+User: Seller
+Scenario:
+
+The seller opens the dashboard.
+
+The Seller views total sales and transactions.
+
+The Seller monitors trends.
+
+Transaction completes.
+
+The system shall generate digital receipts.
+
+The record shall be stored in the dashboard.
+
+Acceptance Criteria
+
+The dashboard must display total sales.
+
+The Dashboard must update automatically.
+
+Information must be simple and readable.
+
+Every completed transaction must generate a record.
+
+Records must include date, amount, and counterparty.
+
+Records must be downloadable or viewable.
+
+7. Feature: AI Predictive Intelligence (Inventory Optimization &amp; Smart Recommendations)
+
+Use Case
+
+User: Seller
+Scenario: AI analyzes transaction and sales patterns.
+
+The seller has historical transaction data.
+
+The system analyzes sales trends and demand patterns.
+
+The system provides inventory optimization insights.
+
+The system recommends products or restocking actions.
+
+Acceptance Criteria
+
+AI must analyze historical transaction data.
+
+Inventory insights must be displayed on seller dashboard
+
+Recommendations must be data-driven and explainable.
+
+8. Feature: Multi-Platform Access (PWA &amp; SMS/USSD)
+
+Use Case
+
+User: Seller
+Scenario: Accessing SecureX via different platforms.
+
+The user has a smartphone. 
+
+The user accesses SecureX in the browser.
+
+The system loads as a Progressive Web App.
+
+The user has a feature phone.
+
+The user dials a USSD code or receives SMS.
+
+The system allows basic transaction actions.
+
+Acceptance Criteria
+
+PWA must function on mobile and desktop browsers.
+
+SMS/USSD must support core actions (payment status, confirmations).
+
+Data must sync across all platforms.
+
+ Note: All acceptance criteria are testable, measurable, and aligned with SecureX’s mission to reduce online transaction fraud while enabling inclusive digital commerce.
+
+9. Assumptions
+
+Users have access to a mobile device
+
+Internet connectivity may be intermittent
+
+Users have basic digital literacy
+
+Payments and escrow are simulated
+
+The platform is for academic demonstration only
+
+10. Constraints
+
+3-week development timeline
+
+Limited development resources
+
+Prototype-only scope
+
+No live financial transactions
+
+No third-party payment APIs
+
+11. Dependencies
+
+Product Design: Wireframes and user flows
+
+Cybersecurity: Threat modeling and security architecture
+
+Data Science: TrustScore logic design
+
+DevOps: System architecture
+
+Software Development: Frontend and backend prototype implementation
+
+12. Risk Overview (High-Level)
+
+Risk
+
+Mitigation
+
+Scope creep
+
+Strict MVP definition
+
+Time constraints
+
+Weekly milestones
+
+Technical complexity
+
+Simplified prototype
+
+User misunderstanding
+
+Clear UX design
+
+13. Delivery Outcome
+
+By the end of the project, SecureX will deliver:
+
+A functional prototype demonstrating secure escrow-based transactions
+
+A trust scoring mechanism
+
+Automated transaction records
+
+A product aligned with SDG 9 goals
+
+Evidence-based problem validation
+
+Draft survey analysis results
+
+Prepare defense Q&amp;A answers
+
+FUNCTIONAL REQUIREMENTS
+
+Functional requirements describe what SecureX must do.
+
+They define the system’s behavior, features, and business logic.
+
+1.1 User Registration &amp; Account Management:
+
+FR-01: The system shall allow users to register as either Buyer or Seller using a phone number, email address and password.(Registration)
+
+FR-02: The system shall provide mechanism to reset password and recover accounts via email.(Recovery)
+
+FR-03: The system shall verify user identity through OTP using phone number /email verification during registration.(Verification)
+
+FR-04: The system shall support tiered KYC verification (Phone Verification → Government ID Upload → Business Registration).
+
+FR-05: The system shall assign role-based permissions (Buyer, Seller, Admin).
+
+FR-06: The system shall allow users to securely log in and log out. (Account Control)
+
+FR-07: The system shall allow users to update their profile information.(Account Control)
+
+FR-08: The system shall allow users to deactivate or delete their accounts.(Account Control)
+
+1.2 SafePay Link &amp; Transaction Initiation:
+
+FR-08: The system shall allow sellers to generate a unique SafePay payment link containing:
+
+Item description
+
+Price
+
+Currency
+
+Seller ID
+
+Transaction reference number
+
+FR-08: The system shall allow buyers to access a secure payment page via the SafePay link.
+
+FR-09: The system shall validate payment amount before processing.
+
+1.3 Escrow &amp; Payment Processing:
+
+FR-10: The system shall lock funds in a secure escrow account upon successful buyer payment (card, bank transfer, or mobile money).
+
+FR-11: The system shall generate a unique transaction ID for every escrowed payment.
+
+FR-12: The system shall notify both buyer and seller via OTP,push notification and SMS when funds are successfully secured in escrow.
+
+FR-13: The system shall record all escrow transactions in a digital ledger.
+
+1.4 Proof of Delivery &amp; Fund Release:
+
+FR-14: The system shall generate a unique 6-digit OTP upon payment confirmation.
+
+FR-15: The system shall transmit the OTP securely to the buyer’s registered device.
+
+FR-16: The system shall allow the seller to enter the OTP in their interface to confirm delivery.
+
+FR-17: The system shall release escrowed funds to the seller only after successful OTP validation.
+
+FR-18: The system shall implement a 48-hour inspection window after delivery confirmation.
+
+FR-19: The system shall automatically release funds if no dispute is raised within 48 hours.
+
+1.5 Dispute &amp; Risk Management:
+
+FR-20: The system shall allow buyers to raise disputes within the inspection window.
+
+FR-21: The system shall temporarily freeze funds during an active dispute.
+
+FR-22: The system shall log dispute history in the transaction ledger.
+
+1.6 TrustScore System and Verification:
+
+FR-23: The system shall calculate a dynamic TrustScore(0–100) for each user.
+
+FR-24: The TrustScore™ shall be calculated based on defined signals such as:
+
+Transaction completion rate.
+
+Dispute rate.
+
+KYC level.
+
+Delivery confirmation speed.
+
+FR-25: The system shall update the TrustScore in real-time after transaction completion or dispute.
+
+FR-26: The system shall display TrustScore and verification badges and rating on public seller profiles.
+
+FR-27: The system shall flag accounts exhibiting suspicious behavior patterns.
+
+1.7 Business Intelligence &amp; Analytics:
+
+FR-28: The system shall automatically record all completed transactions in a digital ledger.
+
+FR-29: The system shall generate real-time dashboards showing:
+
+Daily revenue.
+
+Weekly revenue.
+
+Monthly revenue.
+
+Transaction volume.
+
+FR-30: The system shall allow sellers to export a Digital Business Passport (PDF) containing verified transaction history.
+
+FR-31: The system shall provide predictive inventory insights based on historical sales data (conceptual AI model).
+
+1.8 Accessibility &amp; Inclusion:
+
+FR-32: The system shall support a Progressive Web App (PWA) interface optimized for mobile devices.
+
+FR-33: The system shall provide a USSD interface for delivery confirmation and wallet balance checks (simulation allowed).
+
+FR-34: The system shall support multi-currency transactions and lock exchange rates at escrow initiation.
+
+FR-35: The system shall simulate integration with government ID verification APIs (e.g., NIN, IPRS).
+
+NON-FUNCTIONAL REQUIREMENTS
+
+Non-functional requirements define how well SecureX performs its functions.
+
+They define performance, reliability, security, scalability, and quality standards.
+
+2.1 Performance:
+
+NFR-01: Escrow confirmation notifications shall be delivered within 2 seconds under normal network conditions.
+
+NFR-02: OTP generation and validation shall occur within 2 seconds under normal network conditions.
+
+The system shall comfortably handle at least 1,500 simultaneous users (Customers and Vendors/Sellers) without significant performance degradation.
+
+NFR-03: The system shall load core screens within 2 seconds under normal network conditions.
+
+2.2 Availability:
+
+NFR-04: The system shall maintain an uptime of 99.9% (less than 8.7 hours of unscheduled downtime per year)
+
+NFR-05: The system shall log all transaction errors, system failures, and security attempts for quick diagnosis and maintenance.
+
+2.3 Security:
+
+NFR-06: All personal and financial data (passwords, payment details, contact info etc.) shall be secured using end-to-end encryption (e.g., TLS/SSL, HTTPS/TLS)protocols.
+
+NFR-07: Sensitive data shall be encrypted at rest using AES-256 encryption and shall comply with all local and international data privacy laws when collecting, storing, and processing user data.
+
+NFR-08: The system shall follow and be compliant with relevant payment industry standards PCI-DSS best practices for payment processing to ensure the security of customer payments.
+
+NFR-09: OTP codes shall expire 3minutes. 
+
+NFR-10: The system shall implement role-based access control.
+
+2.4 Scalability:
+
+NFR-11: The architecture shall conceptually support up to 70,000 concurrent transactions.
+
+NFR-12: The system shall be horizontally scalable.
+
+2.5 Usability:
+
+NFR-13: The system shall follow mobile-first UX design principles.
+
+NFR-14: The UI shall use clear language and high-contrast design for low-literacy users.
+
+NFR-15: The system shall minimize required user steps for completing transactions.
+
+2.6 Reliability &amp; Data Integrity:
+
+NFR-16: The system shall ensure zero data loss during transaction processing.
+
+NFR-17: All transactions shall be logged with timestamps and unique identifiers.
+
+NFR-18: The system shall maintain backup logs for recovery.
+
+2.7 Maintainability
+
+NFR-19: The system shall follow modular architecture for future feature expansion.
+
+NFR-20: The codebase shall follow clean documentation standards.
+
+EDGE CASES:
+
+1. Connectivity &amp; Synchronization Edge Case:
+
+If the seller inputs the buyer's OTP while offline, the system must store the validation locally and sync with the server immediately when the connection is restored.
+
+If the buyer attempts to pay in an area with a 2G connection, the system shall serve a lightweight, text-only payment link to ensure the transaction does not time out.
+
+If the server is unreachable during an OTP attempt, show: 'Connection unstable. Please use the USSD fallback (*XXX#) to complete the release.
+
+2. Transactional &amp; Security Edge Cases:
+
+If the buyer enters an incorrect OTP three times, the system must lock the transaction for 30 minutes and notify the buyer via their registered email.
+
+If the buyer refuses to provide the OTP after physical delivery, the seller shall trigger a 'Dispute: Refusal to Release' and the system must hold the funds for human mediation.
+
+If a seller tries to create a payment link for a buyer already flagged for fraud, show: 'Transaction restricted: This buyer does not meet the minimum TrustScore™ requirement.
+
+If the 48-hour inspection window expires without a buyer response, the system must automatically release the funds to the seller and mark the trade as 'Completed by Auto-Release'.&quot;
+
+3. Verification &amp; Identity Edge Cases:
+
+If a user’s Government ID photo is too blurry for the AI to read, show: 'ID verification failed. Please retake the photo in a well-lit area or use a different document.
+
+If a user attempts to sign up with a phone number already linked to a banned account, show: 'Access Denied: This device/number is associated with suspicious activity.
+
+If a seller’s TrustScore drops below 30, the system must limit their escrow capacity to $50 until they complete additional verification steps.
+
+4. Financial &amp; Cross-Border Edge Cases:
+
+If a buyer attempts to pay an amount exceeding their current KYC tier limit, show: 'Limit reached. Please upload your Government ID to process transactions above $X.
+
+If a withdrawal to a mobile money wallet fails due to network downtime, the system must retry the disbursement automatically every 30 minutes for up to 4 hours.

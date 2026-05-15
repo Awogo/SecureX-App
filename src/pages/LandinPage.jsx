@@ -1,357 +1,808 @@
 import { useNavigate } from "react-router-dom";
-import logoGreen from "../assets/logo-green.png";
-import "../styles/landin.css";
-import CheckIcon from "../assets/icons/check.svg";
-import { DocumentIcon, CreditCardIcon, EyeIcon, ArchiveBoxIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
+import Button from "../components/Button";
+import Input from "../components/Input";
+import Card from "../components/Card";
+import {
+  ShieldCheckIcon,
+  LockClosedIcon,
+  CheckCircleIcon,
+  ArrowRightIcon,
+  DocumentTextIcon,
+  CreditCardIcon,
+  EyeIcon,
+  ArchiveBoxIcon,
+  PhoneIcon,
+  SparklesIcon,
+} from "@heroicons/react/24/outline";
 
 const LandingPage = () => {
   const navigate = useNavigate();
+  const [email, setEmail] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
+  const handleGetStarted = () => {
+    if (email.trim()) {
+      navigate("/signup", { state: { email } });
+    } else {
+      navigate("/signup");
+    }
   };
 
   return (
-    <div className="landing-page">
-      
-      {/* Navigation */}
-      <nav className="top-navigation">
-        <div className="nav-wrapper">
-
-          <div className="nav-left">
-            <img
-              src={logoGreen}
-              alt="SecureX Logo"
-              className="nav-logo-image"
-              onClick={() => navigate("/")}
-            />
-          </div>
-
-          <div className={`nav-menu-links ${isMenuOpen ? "active" : ""}`}>
-            <a href="#home">Home</a>
-            <a href="#how-it-works">How it works</a>
-            <a href="#benefits">Benefits</a>
-            <a href="#contact">Contact</a>
-
-            <div className="mobile-actions">
-              <button onClick={() => navigate("/login")}>
-                Sign In
-              </button>
-              <button onClick={() => navigate("/signup")}>
-                Sign Up
-              </button>
+    <div style={{ display: "flex", flexDirection: "column" }}>
+      {/* Navigation — dark sticky, matching design system MarketingNav */}
+      <nav
+        style={{
+          position: "sticky",
+          top: 0,
+          zIndex: 30,
+          background: "rgba(15, 18, 48, 0.94)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          borderBottom: "1px solid rgba(255,255,255,0.06)",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: 1280,
+            margin: "0 auto",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "16px 48px",
+          }}
+        >
+          {/* Brand */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div
+              style={{
+                width: 34,
+                height: 34,
+                background:
+                  "linear-gradient(135deg, var(--navy-600) 0%, var(--indigo-600) 100%)",
+                borderRadius: 4,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "0 6px 18px rgba(74,92,245,0.28)",
+                flexShrink: 0,
+              }}
+            >
+              <ShieldCheckIcon
+                style={{ width: 20, height: 20, color: "white" }}
+              />
             </div>
+            <span
+              style={{
+                fontFamily: "var(--font-display)",
+                fontWeight: "var(--w-bold)",
+                fontSize: 20,
+                color: "white",
+                letterSpacing: "-0.01em",
+              }}
+            >
+              SecureX
+            </span>
           </div>
 
-          <div className="nav-action-buttons">
+          {/* Links (hidden on small screens via media query) */}
+          <div
+            className="landing-nav-links"
+            style={{ display: "flex", gap: 32 }}
+          >
+            {["How it works", "Benefits", "Contact"].map((label) => (
+              <a
+                key={label}
+                href={`#${label.toLowerCase().replace(/ /g, "-")}`}
+                style={{
+                  color: "rgba(255,255,255,0.78)",
+                  textDecoration: "none",
+                  fontSize: 14,
+                  fontWeight: "var(--w-medium)",
+                  transition: "color .15s",
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.color = "var(--mint-500)")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.color = "rgba(255,255,255,0.78)")
+                }
+              >
+                {label}
+              </a>
+            ))}
+          </div>
+
+          {/* Actions */}
+          <div style={{ display: "flex", gap: 10 }}>
             <button
-              className="nav-btn-signin"
               onClick={() => navigate("/login")}
+              style={{
+                background: "transparent",
+                border: "1px solid rgba(255,255,255,0.18)",
+                color: "white",
+                padding: "10px 20px",
+                borderRadius: "var(--radius-md)",
+                fontSize: 14,
+                fontWeight: "var(--w-semibold)",
+                cursor: "pointer",
+                fontFamily: "inherit",
+                transition: "background .15s",
+              }}
             >
-              Sign In
+              Sign in
             </button>
             <button
-              className="nav-btn-signup"
               onClick={() => navigate("/signup")}
+              style={{
+                background: "var(--mint-500)",
+                border: "none",
+                color: "white",
+                padding: "10px 22px",
+                borderRadius: "var(--radius-md)",
+                fontSize: 14,
+                fontWeight: "var(--w-semibold)",
+                cursor: "pointer",
+                fontFamily: "inherit",
+                boxShadow: "0 6px 18px rgba(0,217,163,0.25)",
+                transition: "background .15s, transform .15s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "var(--mint-600)";
+                e.currentTarget.style.transform = "translateY(-1px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "var(--mint-500)";
+                e.currentTarget.style.transform = "translateY(0)";
+              }}
             >
-              Sign Up
+              Get started
             </button>
           </div>
-
-          {/* Hamburger */}
-          <div className="hamburger" onClick={toggleMenu}>
-            ☰
-          </div>
-
         </div>
       </nav>
-      {/* Hero Section with Gradient Background */}
-      <section className="hero-section-full">
-        <div className="hero-content-wrapper">
-          {/* Left Side */}
-          <div className="hero-left-content">
-            <h1 className="main-heading">
-              <span className="text-green">Secure</span> Every Transaction
-              <br />
-              with Trust
-            </h1>
 
-            <p className="hero-description">
-              SecureX is your trusted escrow partner, ensuring safe, hassle-free
-              online transactions for buyers and sellers.
-            </p>
+      {/* Hero Section */}
+      <section
+        id="home"
+        style={{
+          background: "var(--grad-hero)",
+          color: "var(--white)",
+          padding: "var(--space-20) var(--space-8)",
+          textAlign: "center",
+        }}
+      >
+        <div style={{ maxWidth: "900px", margin: "0 auto" }}>
+          <div
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontWeight: "var(--w-semibold)",
+              fontSize: "var(--text-xs)",
+              letterSpacing: "var(--tracking-wide)",
+              textTransform: "uppercase",
+              color: "var(--mint-500)",
+              marginBottom: "var(--space-4)",
+            }}
+          >
+            SECURED ESCROW
+          </div>
 
-            {/* Email Input Box */}
-            <div className="email-input-container">
-              <input
+          <h1
+            style={{
+              fontFamily: "var(--font-display)",
+              fontWeight: "var(--w-bold)",
+              fontSize: "var(--text-6xl)",
+              lineHeight: "var(--lh-tight)",
+              letterSpacing: "var(--tracking-tight)",
+              color: "var(--white)",
+              margin: "0 0 var(--space-4) 0",
+            }}
+          >
+            Secure Every Transaction
+            <br />
+            with Trust
+          </h1>
+
+          <p
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: "var(--text-xl)",
+              lineHeight: "var(--lh-relaxed)",
+              color: "rgba(255, 255, 255, 0.9)",
+              margin: "0 auto var(--space-8)",
+              maxWidth: "600px",
+            }}
+          >
+            SecureX is your trusted escrow partner, ensuring safe, hassle-free
+            online transactions for buyers and sellers.
+          </p>
+
+          {/* Email capture */}
+          <div style={{ maxWidth: "500px", margin: "0 auto var(--space-6)" }}>
+            <div
+              style={{
+                display: "flex",
+                gap: "var(--space-3)",
+                flexWrap: "wrap",
+              }}
+            >
+              <Input
                 type="email"
                 placeholder="Enter your email address"
-                className="hero-email-field"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                style={{
+                  flex: 1,
+                  minWidth: "200px",
+                  background: "var(--white)",
+                  color: "var(--ink-700)",
+                }}
               />
-              <button className="get-started-button" onClick={() => navigate("/signup")}>
-                Get Started →
-              </button>
+              <Button
+                variant="mint"
+                onClick={handleGetStarted}
+                trailing={
+                  <ArrowRightIcon
+                    style={{ width: "16px", height: "16px" }}
+                  />
+                }
+              >
+                Get Started
+              </Button>
             </div>
+          </div>
 
-            <p className="no-credit-text">
-              No credit card required • Cancel anytime
+          <p
+            style={{
+              color: "rgba(255, 255, 255, 0.7)",
+              fontSize: "var(--text-sm)",
+              margin: 0,
+            }}
+          >
+            No credit card required • Cancel anytime
+          </p>
+        </div>
+      </section>
+
+      {/* How It Works — 4 steps */}
+      <section
+        id="how-it-works"
+        style={{ padding: "88px 48px", background: "var(--white)" }}
+      >
+        <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: "var(--space-16)" }}>
+            <div
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontWeight: "var(--w-semibold)",
+                fontSize: "var(--text-xs)",
+                letterSpacing: "var(--tracking-wide)",
+                textTransform: "uppercase",
+                color: "var(--mint-500)",
+                marginBottom: "var(--space-3)",
+              }}
+            >
+              HOW IT WORKS
+            </div>
+            <h2
+              style={{
+                fontFamily: "var(--font-display)",
+                fontWeight: "var(--w-bold)",
+                fontSize: "var(--text-4xl)",
+                lineHeight: "var(--lh-tight)",
+                letterSpacing: "var(--tracking-tight)",
+                color: "var(--ink-900)",
+                margin: "0 0 var(--space-3) 0",
+              }}
+            >
+              A single, calm flow — for buyer and seller.
+            </h2>
+            <p
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: "var(--text-lg)",
+                lineHeight: "var(--lh-relaxed)",
+                color: "var(--ink-600)",
+                maxWidth: "560px",
+                margin: "0 auto",
+              }}
+            >
+              The same four steps, every time. No surprises, no edge cases that
+              stop a sale dead in its tracks.
             </p>
           </div>
 
-          {/* Right Side - Transparent Card */}
- <div className="hero-right-content">
-  <div className="glass-card">
-
-    <h3>
-      Effortless and Secure<br />
-      Transactions Made Easy
-    </h3>
-
-    <div className="steps-wrapper">
-
-      <div className="step-pill">
-        <img src={CheckIcon} alt="Check Icon" className="check-icon" />
-        <span>Buyer and seller get in touch</span>
-      </div>
-
-      <div className="step-pill">
-        <img src={CheckIcon} alt="Check Icon" className="check-icon" />
-        <span>Seller fortifies the asset</span>
-      </div>
-
-      <div className="step-pill">
-        <img src={CheckIcon} alt="Check Icon" className="check-icon" />
-        <span>Buyer approves the asset</span>
-      </div>
-
-      <div className="step-pill">
-        <img src={CheckIcon} alt="Check Icon" className="check-icon" />
-        <span>SecureX pays the seller</span>
-      </div>
-     </div>
-  </div>
- </div>
-</div>
-</section>
-
-      {/* How It Works Section */}
-      <section className="how-works-white-section">
-        <h2 className="section-title-dark">How It Works</h2>
-
-        <div className="how-cards-container">
-          {/* Card 1 */}
-          <div className="how-step-card">
-            <div className="icon-box-green">
-               <DocumentIcon className="how-icon" />
-            </div>
-            <h3>Start a transaction</h3>
-            <p>
-              Follow the process by creating a transaction. Provide the
-              necessary details to secure the transaction terms.
-            </p>
-          </div>
-
-          {/* Card 2 */}
-          <div className="how-step-card">
-            <div className="icon-box-green">
-              <CreditCardIcon className="how-icon" />
-            </div>
-            <h3>Pay As Agreed</h3>
-            <p>
-              The buyer deposits the agreed sum in our SecureX's escrow
-              account for the transaction.
-            </p>
-          </div>
-
-          {/* Card 3 */}
-          <div className="how-step-card">
-            <div className="icon-box-green">
-               <div className="icon-box-green">
-            <EyeIcon className="how-icon" />
-          </div>
-            </div>
-            <h3>Track the order</h3>
-            <p>
-              After application, the buyer conducts due diligence to track
-              transactions status.
-            </p>
-          </div>
-
-          {/* Card 4 */}
-          <div className="how-step-card">
-            <div className="icon-box-green">
-              <ArchiveBoxIcon className="how-icon" />
-            </div>
-            <h3>Securely release the Payout</h3>
-            <p>
-              Once the buyer confirms the warranty, we'll release the
-              secured payment of funds to the seller.
-            </p>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+              gap: "var(--space-6)",
+            }}
+          >
+            {[
+              {
+                icon: (
+                  <DocumentTextIcon
+                    style={{ width: 32, height: 32, color: "var(--mint-600)" }}
+                  />
+                ),
+                title: "Start a transaction",
+                desc: "Seller creates a SafePay link with item, price, and terms.",
+              },
+              {
+                icon: (
+                  <CreditCardIcon
+                    style={{ width: 32, height: 32, color: "var(--mint-600)" }}
+                  />
+                ),
+                title: "Pay as agreed",
+                desc: "Buyer deposits into the escrow vault. Funds locked.",
+              },
+              {
+                icon: (
+                  <EyeIcon
+                    style={{ width: 32, height: 32, color: "var(--mint-600)" }}
+                  />
+                ),
+                title: "Track the order",
+                desc: "Both sides see status in real time across PWA + SMS.",
+              },
+              {
+                icon: (
+                  <ArchiveBoxIcon
+                    style={{ width: 32, height: 32, color: "var(--mint-600)" }}
+                  />
+                ),
+                title: "Release the payout",
+                desc: "OTP confirmation triggers release. Auto-release in 48h.",
+              },
+            ].map((step, i) => (
+              <div key={i} style={{ textAlign: "center", padding: "8px 12px" }}>
+                <div
+                  style={{
+                    width: 72,
+                    height: 72,
+                    background: "var(--grad-mint)",
+                    borderRadius: 4,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginBottom: 18,
+                  }}
+                >
+                  {step.icon}
+                </div>
+                <h3
+                  style={{
+                    fontFamily: "var(--font-sans)",
+                    fontWeight: "var(--w-bold)",
+                    fontSize: "var(--text-xl)",
+                    lineHeight: "var(--lh-snug)",
+                    color: "var(--ink-800)",
+                    margin: "0 0 var(--space-2) 0",
+                  }}
+                >
+                  {step.title}
+                </h3>
+                <p
+                  style={{
+                    fontFamily: "var(--font-sans)",
+                    fontSize: "var(--text-base)",
+                    lineHeight: "var(--lh-relaxed)",
+                    color: "var(--ink-500)",
+                    margin: 0,
+                  }}
+                >
+                  {step.desc}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Why Choose SecureX Section */}
-      <section className="why-section-gray">
-        <h2 className="section-title-dark">Why Choose SecureX?</h2>
-        <p className="section-subtitle-gray">
-          We provide the most secured and reliable escrow services for all your online
-         <br /> transactions
-        </p>
-
-        <div className="benefits-two-col-grid">
-          {/* Benefit 1 */}
-          <div className="benefit-white-card">
-            <div className="benefit-icon-purple">
-             <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                 <rect x="8" y="12" width="12" height="10" rx="2"
-                   stroke="#5B5FFF" strokeWidth="2" strokeLinecap="round"  strokeLinejoin="round" />
-                 <path d="M10 12V9C10 6.8 11.8 5 14 5C16.2 5 18 6.8 18 9V12" stroke="#5B5FFF" strokeWidth="2"
-                    strokeLinecap="round" />
-               </svg>
-            </div>
-            <h3>Bank-Level Security</h3>
-            <p>
-              Your funds are protected with military-grade encryption and secured
-              infrastructure that exceeds industry standards.
+      {/* Benefits — Why SecureX */}
+      <section
+        id="benefits"
+        style={{
+          padding: "88px 48px",
+          background: "var(--bg-subtle)",
+        }}
+      >
+        <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: "var(--space-16)" }}>
+            <h2
+              style={{
+                fontFamily: "var(--font-display)",
+                fontWeight: "var(--w-bold)",
+                fontSize: "var(--text-4xl)",
+                lineHeight: "var(--lh-tight)",
+                letterSpacing: "var(--tracking-tight)",
+                color: "var(--ink-900)",
+                margin: "0 0 var(--space-3) 0",
+              }}
+            >
+              Why SecureX
+            </h2>
+            <p
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: "var(--text-lg)",
+                lineHeight: "var(--lh-relaxed)",
+                color: "var(--ink-600)",
+                maxWidth: "560px",
+                margin: "0 auto",
+              }}
+            >
+              Trust isn't a feature — it's the whole product.
             </p>
           </div>
 
-          {/* Benefit 2 */}
-          <div className="benefit-white-card">
-            <div className="benefit-icon-purple">
-              <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-               <path d="M14 4L7 7V13C7 17.5 10.5 21.5 14 23C17.5 21.5 21 17.5 21 13V7L14 4Z"
-                stroke="#5B5FFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-               <path d="M13 10L11 14H14L12 18L17 13H14L16 10Z"
-                stroke="#5B5FFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
-            <h3>Fraud Protection</h3>
-            <p>
-              Advanced AI-powered systems detect and prevent fraudulent transactions
-              before they happen.
-            </p>
-          </div>
-
-          {/* Benefit 3 */}
-          <div className="benefit-white-card">
-            <div className="benefit-icon-purple">
-              <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                <path d="M6 14C6 9.6 9.6 6 14 6C18.4 6 22 9.6 22 14"
-                  stroke="#5B5FFF" strokeWidth="2" strokeLinecap="round" />
-                 <rect x="4" y="14" width="4" height="6" rx="2" stroke="#5B5FFF" strokeWidth="2"/>
-                  <rect x="20" y="14" width="4" height="6" rx="2"stroke="#5B5FFF" strokeWidth="2" />
-               </svg>
-            </div>
-            <h3>24/7 Support</h3>
-            <p>
-              Our dedicated team is available around the clock to assist with any
-              transaction-related concerns.
-            </p>
-          </div>
-
-          {/* Benefit 4 */}
-          <div className="benefit-white-card">
-            <div className="benefit-icon-purple">
-              <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                <circle cx="11" cy="11" r="3" stroke="#5B5FFF" strokeWidth="2" />
-                 <circle cx="18" cy="12" r="2.5" stroke="#5B5FFF" strokeWidth="2" />
-                 <path d="M6 20C6 17.8 8.5 16 11 16C13.5 16 16 17.8 16 20" stroke="#5B5FFF" strokeWidth="2"strokeLinecap="round" />
-                 <path d="M15 20C15 18.5 16.8 17.5 18.5 17.5C20.2 17.5 22 18.5 22 20"
-                  stroke="#5B5FFF"strokeWidth="2"strokeLinecap="round"/>
-                </svg>
-            </div>
-            <h3>Trusted by Thousands</h3>
-            <p>
-              Join over 8,000+ active buyers and sellers who trust SecureX to secure their
-              transactions through SecureX.
-            </p>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+              gap: "var(--space-5)",
+            }}
+          >
+            {[
+              {
+                icon: (
+                  <LockClosedIcon
+                    style={{
+                      width: 26,
+                      height: 26,
+                      color: "var(--indigo-600)",
+                    }}
+                  />
+                ),
+                title: "Bank-level security",
+                desc: "AES-256 at rest, TLS in transit, PCI-DSS-aligned controls. Your money never sits exposed.",
+              },
+              {
+                icon: (
+                  <ShieldCheckIcon
+                    style={{
+                      width: 26,
+                      height: 26,
+                      color: "var(--indigo-600)",
+                    }}
+                  />
+                ),
+                title: "TrustScore™ on every profile",
+                desc: "A live 0–100 trust score from completion rate, dispute history and KYC tier. Buyers see it before they pay.",
+              },
+              {
+                icon: (
+                  <PhoneIcon
+                    style={{
+                      width: 26,
+                      height: 26,
+                      color: "var(--indigo-600)",
+                    }}
+                  />
+                ),
+                title: "Works on any phone",
+                desc: "PWA on smartphones, USSD on feature phones. No customer left behind on 2G.",
+              },
+              {
+                icon: (
+                  <SparklesIcon
+                    style={{
+                      width: 26,
+                      height: 26,
+                      color: "var(--indigo-600)",
+                    }}
+                  />
+                ),
+                title: "AI inventory & insights",
+                desc: "SecureX learns your sales rhythm and recommends what to restock and when.",
+              },
+            ].map((benefit, i) => (
+              <div
+                key={i}
+                style={{
+                  background: "white",
+                  border: "1px solid var(--border-200)",
+                  borderRadius: "var(--radius-xl)",
+                  padding: "28px",
+                  boxShadow: "var(--shadow-sm)",
+                  display: "flex",
+                  gap: 18,
+                }}
+              >
+                <div
+                  style={{
+                    width: 56,
+                    height: 56,
+                    background: "var(--indigo-100)",
+                    borderRadius: 4,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  {benefit.icon}
+                </div>
+                <div>
+                  <h3
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontWeight: "var(--w-bold)",
+                      fontSize: "var(--text-xl)",
+                      lineHeight: "var(--lh-snug)",
+                      color: "var(--ink-800)",
+                      margin: "0 0 var(--space-2) 0",
+                    }}
+                  >
+                    {benefit.title}
+                  </h3>
+                  <p
+                    style={{
+                      fontFamily: "var(--font-sans)",
+                      fontSize: "var(--text-base)",
+                      lineHeight: "var(--lh-relaxed)",
+                      color: "var(--ink-500)",
+                      margin: 0,
+                    }}
+                  >
+                    {benefit.desc}
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Final CTA Section */}
-      <section className="final-cta-dark">
-        <h2>Ready to Secure Your Transactions?</h2>
-        <p>
-          Join thousands of satisfied users who trust SecureX for safe and
-          reliable escrow services
-        </p>
-
-        <div className="cta-button-group">
-          <button className="btn-create-account" onClick={() => navigate("/signup")}>
-            Create New Account
-          </button>
-          <button className="btn-learn-more">Learn More</button>
+      {/* CTA Section */}
+      <section
+        style={{
+          padding: "88px 48px",
+          background: "var(--grad-cta)",
+          color: "var(--white)",
+          textAlign: "center",
+        }}
+      >
+        <div style={{ maxWidth: "720px", margin: "0 auto" }}>
+          <h2
+            style={{
+              fontFamily: "var(--font-display)",
+              fontWeight: "var(--w-bold)",
+              fontSize: "var(--text-4xl)",
+              lineHeight: "var(--lh-tight)",
+              letterSpacing: "var(--tracking-tight)",
+              color: "var(--white)",
+              margin: "0 0 var(--space-4) 0",
+            }}
+          >
+            Ready to make your next sale safer?
+          </h2>
+          <p
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: "var(--text-lg)",
+              lineHeight: "var(--lh-relaxed)",
+              color: "rgba(255, 255, 255, 0.85)",
+              margin: "0 0 var(--space-8) 0",
+            }}
+          >
+            Join 8,000+ SMEs across Africa using SecureX to settle high-stakes
+            transactions in minutes.
+          </p>
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "var(--space-3)",
+              justifyContent: "center",
+            }}
+          >
+            <Button
+              variant="mint"
+              onClick={() => navigate("/signup")}
+              trailing={
+                <ArrowRightIcon style={{ width: "16px", height: "16px" }} />
+              }
+            >
+              Create account
+            </Button>
+            <button
+              style={{
+                background: "transparent",
+                border: "2px solid rgba(255,255,255,0.25)",
+                color: "white",
+                padding: "12px 28px",
+                borderRadius: "var(--radius-md)",
+                fontWeight: "var(--w-semibold)",
+                fontSize: "var(--text-base)",
+                cursor: "pointer",
+                fontFamily: "inherit",
+                transition: "border-color .15s, background .15s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = "rgba(255,255,255,0.5)";
+                e.currentTarget.style.background = "rgba(255,255,255,0.08)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)";
+                e.currentTarget.style.background = "transparent";
+              }}
+            >
+              Talk to sales
+            </button>
+          </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="dark-footer">
-        <div className="footer-grid-container">
-          <div className="footer-brand-col">
-            <div className="footer-brand-logo">
-              <img src={logoGreen} alt="SecureX"></img>
-              
+      <footer
+        id="contact"
+        style={{
+          background: "var(--navy-950)",
+          color: "var(--white)",
+          padding: "48px 48px 28px",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: "1200px",
+            margin: "0 auto",
+            marginBottom: "var(--space-8)",
+          }}
+        >
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+              gap: "var(--space-8)",
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  marginBottom: "var(--space-4)",
+                }}
+              >
+                <div
+                  style={{
+                    width: 30,
+                    height: 30,
+                    background:
+                      "linear-gradient(135deg, var(--navy-600) 0%, var(--indigo-600) 100%)",
+                    borderRadius: 4,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <ShieldCheckIcon
+                    style={{ width: 17, height: 17, color: "white" }}
+                  />
+                </div>
+                <span
+                  style={{
+                    fontFamily: "var(--font-display)",
+                    fontWeight: "var(--w-bold)",
+                    fontSize: "var(--text-lg)",
+                    color: "var(--white)",
+                  }}
+                >
+                  SecureX
+                </span>
+              </div>
+              <p
+                style={{
+                  color: "rgba(255,255,255,0.5)",
+                  fontSize: "var(--text-sm)",
+                  margin: 0,
+                  lineHeight: "var(--lh-relaxed)",
+                }}
+              >
+                Secure, trusted escrow for African SMEs.
+              </p>
             </div>
 
-            <p className="footer-tagline">
-              Your most trusted escrow service for safe<br />
-              and reliable online transactions.
-            </p>
-
-            <div className="footer-social-row">
-              <a href="#" className="social-icon-link">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z"/>
-                </svg>
-              </a>
-              <a href="#" className="social-icon-link">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/>
-                </svg>
-              </a>
-              <a href="#" className="social-icon-link">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"/>
-                  <circle cx="4" cy="4" r="2"/>
-                </svg>
-              </a>
-            </div>
-          </div>
-
-          <div className="footer-links-section">
-            <div className="footer-link-col">
-              <h4>Product</h4>
-              <a href="#">Features</a>
-              <a href="#">Pricing</a>
-              <a href="#">Security</a>
-              <a href="#">API</a>
-            </div>
-
-            <div className="footer-link-col">
-              <h4>Company</h4>
-              <a href="#">About Us</a>
-              <a href="#">Careers</a>
-              <a href="#">Blog</a>
-              <a href="#">Press</a>
-            </div>
-
-            <div className="footer-link-col">
-              <h4>Support</h4>
-              <a href="#">Help Center</a>
-              <a href="#">Contact Us</a>
-              <a href="#">Privacy Policy</a>
-              <a href="#">Terms of Service</a>
-            </div>
+            {[
+              {
+                title: "Product",
+                links: ["How it Works", "Pricing", "Security"],
+              },
+              {
+                title: "Support",
+                links: ["Help Center", "Contact Us", "Status"],
+              },
+              {
+                title: "Company",
+                links: ["About", "Blog", "Careers"],
+              },
+            ].map((col) => (
+              <div key={col.title}>
+                <h4
+                  style={{
+                    fontWeight: "var(--w-semibold)",
+                    fontSize: "var(--text-sm)",
+                    color: "var(--white)",
+                    margin: "0 0 var(--space-4) 0",
+                  }}
+                >
+                  {col.title}
+                </h4>
+                <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                  {col.links.map((link) => (
+                    <li key={link} style={{ marginBottom: "var(--space-2)" }}>
+                      <a
+                        href="#"
+                        style={{
+                          color: "rgba(255,255,255,0.5)",
+                          textDecoration: "none",
+                          fontSize: "var(--text-sm)",
+                          transition: "color .15s",
+                        }}
+                        onMouseEnter={(e) =>
+                          (e.currentTarget.style.color = "rgba(255,255,255,0.85)")
+                        }
+                        onMouseLeave={(e) =>
+                          (e.currentTarget.style.color = "rgba(255,255,255,0.5)")
+                        }
+                      >
+                        {link}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
         </div>
 
-        <div className="footer-copyright">
-          <p>© 2026 SecureX. All rights reserved. | Securing trust and privacy worldwide</p>
+        <div
+          style={{
+            borderTop: "1px solid rgba(255,255,255,0.1)",
+            paddingTop: "var(--space-6)",
+            display: "flex",
+            flexWrap: "wrap",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: "var(--space-4)",
+          }}
+        >
+          <p
+            style={{
+              margin: 0,
+              color: "rgba(255,255,255,0.4)",
+              fontSize: "var(--text-xs)",
+            }}
+          >
+            © 2026 SecureX. All rights reserved.
+          </p>
+          <div style={{ display: "flex", gap: "var(--space-6)" }}>
+            {["Privacy", "Terms", "Cookies"].map((link) => (
+              <a
+                key={link}
+                href="#"
+                style={{
+                  color: "rgba(255,255,255,0.4)",
+                  textDecoration: "none",
+                  fontSize: "var(--text-xs)",
+                  transition: "color .15s",
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.color = "rgba(255,255,255,0.7)")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.color = "rgba(255,255,255,0.4)")
+                }
+              >
+                {link}
+              </a>
+            ))}
+          </div>
         </div>
       </footer>
     </div>

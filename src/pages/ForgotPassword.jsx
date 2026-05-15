@@ -59,7 +59,7 @@ const ForgotPassword = () => {
         <p className="auth-subheading">Enter your email to receive a verification code</p>
         
         {error && <div className="auth-error">{error}</div>}
-        {success && <div className="auth-success" style={{ background: '#d1fae5', color: '#065f46', padding: '10px', borderRadius: '5px', marginBottom: '10px', textAlign: 'center' }}>{success}</div>}
+        {success && <div className="auth-success" style={{ background: '#d1fae5', color: '#065f46', padding: '10px', borderRadius: '4px', marginBottom: '10px', textAlign: 'center' }}>{success}</div>}
 
         <div className="auth-card">
 
